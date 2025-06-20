@@ -48,7 +48,7 @@ export default function Login() {
       }
 
       // Replace this URL with your backend login endpoint
-      const API_ENDPOINT = "https://your-backend-api.com/api/auth/login";
+      const API_ENDPOINT = `${import.meta.env.VITE_API_URL}/auth/login`;
 
       // Send data to backend
       const response = await axios.post(API_ENDPOINT, {
