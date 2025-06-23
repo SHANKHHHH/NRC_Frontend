@@ -86,7 +86,7 @@ export default function Login() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <h2 className="text-2xl font-bold text-center text-indigo-600">Login</h2>
+            <h2 className="text-2xl font-bold text-center text-[#00AEEF]">Login</h2>
 
             {/* Phone Input */}
             <input
@@ -139,7 +139,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center hover:cursor-pointer"
+              className="w-full bg-[#00AEEF] hover:bg-[#00AEEF] text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center hover:cursor-pointer"
             >
               {isSubmitting && (
                 <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
