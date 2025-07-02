@@ -74,10 +74,16 @@ const Header: React.FC = () => {
               </div>
             </TabList>
           </TabProvider>
-          <div className="flex justify-center mt-2">
-            <div className="rounded-full bg-gray-200 p-2">
-              <img src={userIcon} alt="User" className="h-5 w-5" />
-            </div>
+          <div className="flex justify-center items-center ">
+            <span
+              className="text-base font-medium text-gray-700 hover:cursor-pointer px-4 py-2 rounded hover:bg-gray-100 transition"
+              onClick={() => {
+                setSidebarOpen(true);
+                setMenuOpen(false);
+              }}
+            >
+              Profile
+            </span>
           </div>
         </div>
       )}
