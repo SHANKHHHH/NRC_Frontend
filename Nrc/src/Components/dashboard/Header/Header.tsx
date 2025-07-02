@@ -5,6 +5,7 @@ import { TabProvider } from '../../../context/TabContext';
 
 import logo from '../../../assets/Login/logo1.png';
 import userIcon from '../../../assets/Icons/user.svg';
+import UserSidebar from '../../UserProfile/UserSidebar';
 
 const tabItems = [
   { label: 'Dashboard', value: 'dashboard' },
@@ -18,6 +19,7 @@ const tabItems = [
 const Header: React.FC = () => {
   const [tabValue, setTabValue] = useState<string>('dashboard');
   const [menuOpen, setMenuOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-[#fafafa] w-full shadow-sm">
@@ -38,9 +40,12 @@ const Header: React.FC = () => {
 
         {/* Desktop User Icon */}
         <div className="hidden sm:flex items-center">
-          <div className="rounded-full bg-gray-200 p-2">
+          <button
+            className="rounded-full bg-gray-200 p-2 hover:cursor-pointer"
+            onClick={() => setSidebarOpen(true)}
+          >
             <img src={userIcon} alt="User" className="h-5 w-5" />
-          </div>
+          </button>
         </div>
 
         {/* Hamburger for mobile */}
@@ -76,6 +81,14 @@ const Header: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* User Sidebar */}
+      <UserSidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        userName="Admin"
+        onLogout={() => {/* handle logout */}}
+      />
     </header>
   );
 };
