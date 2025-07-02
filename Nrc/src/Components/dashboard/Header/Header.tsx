@@ -1,0 +1,83 @@
+import React, { useState } from 'react';
+import Tab from '../../Tab/Tab';
+import TabList from '../../Tab/TabList';
+import { TabProvider } from '../../../context/TabContext';
+
+import logo from '../../../assets/Login/logo1.png';
+import userIcon from '../../../assets/Icons/user.svg';
+
+const tabItems = [
+  { label: 'Dashboard', value: 'dashboard' },
+  { label: 'Planner', value: 'planner' },
+  { label: 'Production Head', value: 'production' },
+  { label: 'Dispatch Head', value: 'dispatch' },
+  { label: 'QC Manager', value: 'qc' },
+  { label: 'Printing', value: 'printing' },
+];
+
+const Header: React.FC = () => {
+  const [tabValue, setTabValue] = useState<string>('dashboard');
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  return (
+    <header className="sticky top-0 z-50 bg-[#fafafa] w-full shadow-sm">
+      <div className="flex items-center justify-between px-4 sm:px-8 py-2">
+        {/* Logo */}
+        <img src={logo} alt="Logo" className="h-15 w-auto" />
+
+        {/* Desktop Tabs */}
+        <TabProvider value={tabValue}>
+          <div className="hidden sm:flex flex-1 justify-center">
+            <TabList value={tabValue} onChange={setTabValue}>
+              {tabItems.map(tab => (
+                <Tab key={tab.value} label={tab.label} value={tab.value} onChange={() => {}} />
+              ))}
+            </TabList>
+          </div>
+        </TabProvider>
+
+        {/* Desktop User Icon */}
+        <div className="hidden sm:flex items-center">
+          <div className="rounded-full bg-gray-200 p-2">
+            <img src={userIcon} alt="User" className="h-5 w-5" />
+          </div>
+        </div>
+
+        {/* Hamburger for mobile */}
+        <div className="sm:hidden flex items-center">
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="p-2 rounded focus:outline-none"
+            aria-label="Open menu"
+          >
+            <svg className="h-6 w-6 text-gray-700" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d={menuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"} />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* Mobile Dropdown Menu */}
+      {menuOpen && (
+        <div className="sm:hidden bg-[#fafafa] border-t border-gray-200 shadow-md animate-fade-in-down flex flex-col items-center py-4 gap-2">
+          <TabProvider value={tabValue}>
+            <TabList value={tabValue} onChange={value => { setTabValue(value); setMenuOpen(false); }}>
+              <div className="flex flex-col items-center w-full gap-2">
+                {tabItems.map(tab => (
+                  <Tab key={tab.value} label={tab.label} value={tab.value} onChange={() => {}} />
+                ))}
+              </div>
+            </TabList>
+          </TabProvider>
+          <div className="flex justify-center mt-2">
+            <div className="rounded-full bg-gray-200 p-2">
+              <img src={userIcon} alt="User" className="h-5 w-5" />
+            </div>
+          </div>
+        </div>
+      )}
+    </header>
+  );
+};
+
+export default Header;
