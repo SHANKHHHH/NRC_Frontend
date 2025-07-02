@@ -6,7 +6,7 @@ import Logo from "../assets/Login/logo.jpg";
  * Type for form data used in login
  */
 interface LoginFormData {
-  phone: string;
+  userId: string;
   password: string;
 }
 
@@ -16,13 +16,13 @@ interface LoginFormData {
 export default function Login() {
   // ---------------------- State Declarations ---------------------- //
   const [formData, setFormData] = useState<LoginFormData>({
-    phone: "",
+    userId: "",
     password: "",
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
-  const [phoneError, setPhoneError] = useState<string | null>(null);
+  const [userIdError, setUserIdError] = useState<string | null>(null);
 
   // ---------------------- Handlers ---------------------- //
 
@@ -33,17 +33,9 @@ export default function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-    if (name === "phone") {
-      setPhoneError(null); // Clear error on change
+    if (name === "userId") {
+      setUserIdError(null); // Clear error on change
     }
-  };
-
-  /**
-   * Validate Indian mobile number
-   */
-  const isValidIndianMobile = (num: string) => {
-    // Accepts 10 digits starting with 6-9, or +91 followed by 10 digits
-    return /^((\+91)?[6-9][0-9]{9})$/.test(num.trim());
   };
 
   /**
@@ -54,31 +46,26 @@ export default function Login() {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { phone, password } = formData;
+    const { userId, password } = formData;
 
-    // Validate phone number
-    if (!isValidIndianMobile(phone)) {
-      setPhoneError("Please enter a valid Indian mobile number.");
+    // Simple frontend validation
+    if (!userId.trim() || !password.trim()) {
+      setUserIdError("User ID is required.");
       setIsSubmitting(false);
       return;
     }
 
     try {
-      // Simple frontend validation
-      if (!phone.trim() || !password.trim()) {
-        throw new Error("All fields are required.");
-      }
-
       // API endpoint (secured via environment variable)
       const API_ENDPOINT = `${import.meta.env.VITE_API_URL}/auth/login`;
 
       // Make POST request to backend
-      const response = await axios.post(API_ENDPOINT, { phone, password });
+      const response = await axios.post(API_ENDPOINT, { userId, password });
 
       // If login successful
       if (response.status === 200) {
         setSubmitStatus("success");
-        setFormData({ phone: "", password: "" }); // Clear form
+        setFormData({ userId: "", password: "" }); // Clear form
       } else {
         setSubmitStatus("error");
       }
@@ -107,19 +94,19 @@ export default function Login() {
           <form onSubmit={handleSubmit} className="space-y-6">
             <h2 className="text-2xl font-bold text-center text-[#00AEEF]">Login</h2>
 
-            {/* Phone Input */}
+            {/* User ID Input */}
             <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
+              type="text"
+              name="userId"
+              value={formData.userId}
               onChange={handleChange}
-              placeholder="Phone Number"
-              className={`w-full px-4 py-3 rounded-lg border ${phoneError ? 'border-red-400' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#00AEEF]`}
+              placeholder="User ID"
+              className={`w-full px-4 py-3 rounded-lg border ${userIdError ? 'border-red-400' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#00AEEF]`}
               required
-              maxLength={13}
+              maxLength={20}
             />
-            {phoneError && (
-              <div className="text-red-600 text-sm mb-2">{phoneError}</div>
+            {userIdError && (
+              <div className="text-red-600 text-sm mb-2">{userIdError}</div>
             )}
 
             {/* Password Input */}
