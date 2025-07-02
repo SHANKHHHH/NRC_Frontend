@@ -22,6 +22,7 @@ export default function Login() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
+  const [phoneError, setPhoneError] = useState<string | null>(null);
 
   // ---------------------- Handlers ---------------------- //
 
@@ -32,6 +33,17 @@ export default function Login() {
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (name === "phone") {
+      setPhoneError(null); // Clear error on change
+    }
+  };
+
+  /**
+   * Validate Indian mobile number
+   */
+  const isValidIndianMobile = (num: string) => {
+    // Accepts 10 digits starting with 6-9, or +91 followed by 10 digits
+    return /^((\+91)?[6-9][0-9]{9})$/.test(num.trim());
   };
 
   /**
@@ -43,6 +55,13 @@ export default function Login() {
     setIsSubmitting(true);
 
     const { phone, password } = formData;
+
+    // Validate phone number
+    if (!isValidIndianMobile(phone)) {
+      setPhoneError("Please enter a valid Indian mobile number.");
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       // Simple frontend validation
@@ -95,9 +114,13 @@ export default function Login() {
               value={formData.phone}
               onChange={handleChange}
               placeholder="Phone Number"
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+              className={`w-full px-4 py-3 rounded-lg border ${phoneError ? 'border-red-400' : 'border-gray-200'} focus:outline-none focus:ring-2 focus:ring-[#00AEEF]`}
               required
+              maxLength={13}
             />
+            {phoneError && (
+              <div className="text-red-600 text-sm mb-2">{phoneError}</div>
+            )}
 
             {/* Password Input */}
             <input
