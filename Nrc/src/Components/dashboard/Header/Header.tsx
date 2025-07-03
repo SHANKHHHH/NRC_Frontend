@@ -16,8 +16,12 @@ const tabItems = [
   { label: 'Printing', value: 'printing' },
 ];
 
-const Header: React.FC = () => {
-  const [tabValue, setTabValue] = useState<string>('dashboard');
+interface HeaderProps {
+  tabValue: string;
+  setTabValue: (value: string) => void;
+}
+
+const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -66,12 +70,14 @@ const Header: React.FC = () => {
       {menuOpen && (
         <div className="sm:hidden bg-[#fafafa] border-t border-gray-200 shadow-md animate-fade-in-down flex flex-col items-center py-4 gap-2">
           <TabProvider value={tabValue}>
-            <TabList value={tabValue} onChange={value => { setTabValue(value); setMenuOpen(false); }}>
-              <div className="flex flex-col items-center w-full gap-2">
-                {tabItems.map(tab => (
-                  <Tab key={tab.value} label={tab.label} value={tab.value} onChange={() => {}} />
-                ))}
-              </div>
+            <TabList
+              value={tabValue}
+              onChange={value => { setTabValue(value); setMenuOpen(false); }}
+              direction="vertical"
+            >
+              {tabItems.map(tab => (
+                <Tab key={tab.value} label={tab.label} value={tab.value} onChange={() => {}} />
+              ))}
             </TabList>
           </TabProvider>
           <div className="flex justify-center items-center ">
