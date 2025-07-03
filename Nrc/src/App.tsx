@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from './Components/dashboard/Header/Header';
 
-const Login = lazy(() => import('./Pages/Login'));
+//const Login = lazy(() => import('./Pages/Login'));
 const OrderSummary = lazy(() => import('./Components/Planner/OrderSummary'));
 const ProductionSchedule = lazy(() => import('./Components/Planner/ProductionSchedule'));
 
