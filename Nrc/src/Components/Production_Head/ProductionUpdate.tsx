@@ -50,7 +50,7 @@ const ProductionUpdate: React.FC = () => {
 
   return (
     <div className="mt-10">
-      <h2 className="text-lg font-semibold mb-4">Upcoming Production Update</h2>
+      <h2 className="text-lg font-semibold mb-4">Production Overview</h2>
       <div className="bg-white rounded-xl shadow-sm p-0 border border-gray-200">
         <div className="overflow-x-auto" style={{ maxHeight: 300, overflowY: 'auto' }}>
           <table className="min-w-full text-sm">
