@@ -6,6 +6,7 @@ interface UserSidebarProps {
   onClose: () => void;
   userName?: string;
   onLogout: () => void;
+  onOptionSelect?: (option: string) => void;
 }
 
 const menuOptions = [
@@ -20,7 +21,7 @@ const menuOptions = [
   'QC Manager',
 ];
 
-const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, userName = 'Admin', onLogout }) => (
+const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, userName = 'Admin', onLogout, onOptionSelect }) => (
   <>
     {/* Overlay */}
     <div
@@ -46,7 +47,15 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, userName = 'Ad
         <div className="w-full flex flex-col gap-0">
           {menuOptions.map(option => (
             <React.Fragment key={option}>
-              <button className="w-full text-left px-6 py-3 text-base font-medium hover:bg-blue-50 focus:outline-none hover:cursor-pointer">
+              <button
+                className="w-full text-left px-6 py-3 text-base font-medium hover:bg-blue-50 focus:outline-none hover:cursor-pointer"
+                onClick={() => {
+                  if (onOptionSelect) onOptionSelect(option);
+                  if (option !== "Create new ID") {
+                    onClose();
+                  }
+                }}
+              >
                 {option}
               </button>
               <div className="border-b border-gray-200 mx-6" />

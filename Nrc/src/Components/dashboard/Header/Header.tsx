@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Tab from '../../Tab/Tab';
 import TabList from '../../Tab/TabList';
 import { TabProvider } from '../../../context/TabContext';
-
+import CreateNewId from '../../UserProfile/Options/CreateNewId';
 import logo from '../../../assets/Login/logo1.png';
 import userIcon from '../../../assets/Icons/user.svg';
 import UserSidebar from '../../UserProfile/UserSidebar';
@@ -24,6 +24,7 @@ interface HeaderProps {
 const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showCreateId, setShowCreateId] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-[#fafafa] w-full shadow-sm">
@@ -100,7 +101,28 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
         onClose={() => setSidebarOpen(false)}
         userName="Admin"
         onLogout={() => {/* handle logout */}}
+        onOptionSelect={(option) => {
+          if (option === "Create new ID") {
+            setShowCreateId(true);
+            setSidebarOpen(false);
+          }
+        }}
       />
+
+      {showCreateId && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-sm bg-transparent bg-opacity-40">
+          <div className="relative">
+            <button
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+              onClick={() => setShowCreateId(false)}
+              aria-label="Close"
+            >
+              &times;
+            </button>
+            <CreateNewId />
+          </div>
+        </div>
+      )}
     </header>
   );
 };
