@@ -7,6 +7,7 @@ import Notifications from '../../UserProfile/Options/Notifications';
 import logo from '../../../assets/Login/logo1.png';
 import userIcon from '../../../assets/Icons/user.svg';
 import UserSidebar from '../../UserProfile/UserSidebar';
+import ManageComponent from '../../UserProfile/Options/ManageAccess/ManageComponent';
 
 const tabItems = [
   { label: 'Dashboard', value: 'dashboard' },
@@ -27,6 +28,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateId, setShowCreateId] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [activeManageRole, setActiveManageRole] = useState<string | null>(null);
 
   return (
     <header className="sticky top-0 z-50 bg-[#fafafa] w-full shadow-sm">
@@ -138,6 +140,11 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
             setMenuOpen(false);
           }
         }}
+        onManageAccessRoleSelect={(role) => {
+          setActiveManageRole(role);
+          setSidebarOpen(false);
+          setMenuOpen(false);
+        }}
       />
 
       {showCreateId && (
@@ -157,6 +164,13 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
 
       {showNotifications && (
         <Notifications onClose={() => setShowNotifications(false)} />
+      )}
+
+      {activeManageRole && (
+        <ManageComponent
+          role={activeManageRole}
+          onClose={() => setActiveManageRole(null)}
+        />
       )}
     </header>
   );
