@@ -3,9 +3,13 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import './App.css';
 import Header from './Components/dashboard/Header/Header';
 
-const Login = lazy(() => import('./Pages/Login'));
+//const Login = lazy(() => import('./Pages/Login'));
 const OrderSummary = lazy(() => import('./Components/Planner/OrderSummary'));
 const ProductionSchedule = lazy(() => import('./Components/Planner/ProductionSchedule'));
+const Summary = lazy(() => import('./Components/Production_Head/Summary'));
+const ProductionUpdate = lazy(() => import('./Components/Production_Head/ProductionUpdate'));
+const DispatchOverview = lazy(() => import('./Components/DispatchHead/DispatchOverview'));
+const DispatchSummary = lazy(() => import('./Components/DispatchHead/DispatchSummary'));
 
 function App() {
   const [tabValue, setTabValue] = useState('dashboard');
@@ -24,6 +28,20 @@ function App() {
                   <>
                     <OrderSummary />
                     <ProductionSchedule />
+                  </>
+                )}
+                {/* Render these when production tab is selected */}
+                {tabValue === 'production' && (
+                  <>
+                    <Summary />
+                    <ProductionUpdate />
+                  </>
+                )}
+                {/* Render these when dispatch tab is selected */}
+                {tabValue === 'dispatch' && (
+                  <>
+                    <DispatchOverview />
+                    <DispatchSummary />
                   </>
                 )}
                 {/* You can add other tab content here if needed */}
