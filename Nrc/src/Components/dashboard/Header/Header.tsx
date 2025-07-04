@@ -3,6 +3,7 @@ import Tab from '../../Tab/Tab';
 import TabList from '../../Tab/TabList';
 import { TabProvider } from '../../../context/TabContext';
 import CreateNewId from '../../UserProfile/Options/CreateNewId';
+import Notifications from '../../UserProfile/Options/Notifications';
 import logo from '../../../assets/Login/logo1.png';
 import userIcon from '../../../assets/Icons/user.svg';
 import UserSidebar from '../../UserProfile/UserSidebar';
@@ -25,6 +26,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateId, setShowCreateId] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 bg-[#fafafa] w-full shadow-sm">
@@ -106,6 +108,10 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
             setShowCreateId(true);
             setSidebarOpen(false);
             setMenuOpen(false);
+          } else if (option === "Notifications") {
+            setShowNotifications(true);
+            setSidebarOpen(false);
+            setMenuOpen(false);
           } else if (option === "Planner") {
             setTabValue('planner');
             setSidebarOpen(false);
@@ -147,6 +153,10 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
             <CreateNewId />
           </div>
         </div>
+      )}
+
+      {showNotifications && (
+        <Notifications onClose={() => setShowNotifications(false)} />
       )}
     </header>
   );
