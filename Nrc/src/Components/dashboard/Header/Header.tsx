@@ -105,6 +105,31 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
           if (option === "Create new ID") {
             setShowCreateId(true);
             setSidebarOpen(false);
+            setMenuOpen(false);
+          } else if (option === "Planner") {
+            setTabValue('planner');
+            setSidebarOpen(false);
+            setMenuOpen(false);
+          } else if (option === "Production Head") {
+            setTabValue('production');
+            setSidebarOpen(false);
+            setMenuOpen(false);
+          } else if (option === "Dispatch Head" || option === "Dispatch Executive") {
+            setTabValue('dispatch');
+            setSidebarOpen(false);
+            setMenuOpen(false);
+          } else if (option === "QC Manager") {
+            setTabValue('qc');
+            setSidebarOpen(false);
+            setMenuOpen(false);
+          } else if (option === "Printing" || option === "Printing Manager") {
+            setTabValue('printing');
+            setSidebarOpen(false);
+            setMenuOpen(false);
+          } else if (option === "Dashboard") {
+            setTabValue('dashboard');
+            setSidebarOpen(false);
+            setMenuOpen(false);
           }
         }}
       />
