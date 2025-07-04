@@ -44,7 +44,7 @@ const CreateNewId: React.FC = () => {
   };
 
   return (
-    <div className="w-full max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-6xl 2xl:max-w-6xl mx-auto mt-8 bg-white rounded-lg shadow-2xl p-8">
+    <div className="w-full max-w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl xl:max-w-6xl 2xl:max-w-6xl mx-auto mt-8 bg-white rounded-2xl shadow-2xl p-8">
       <h2 className="text-center text-lg font-semibold mb-6">
         Create New Login ID
       </h2>

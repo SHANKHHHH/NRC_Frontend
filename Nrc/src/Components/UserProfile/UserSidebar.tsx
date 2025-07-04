@@ -105,7 +105,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, userName = 'Ad
             </button>
           ) : null}
           <button
-            className="w-full bg-[#00AEEF] text-white py-3 rounded-lg font-semibold text-base hover:bg-[#0099cc] transition"
+            className="w-full bg-[#00AEEF] text-white py-3 rounded-lg font-semibold text-base hover:bg-[#0099cc] transition hover:cursor-pointer" 
             onClick={onLogout}
           >
             Log Out
