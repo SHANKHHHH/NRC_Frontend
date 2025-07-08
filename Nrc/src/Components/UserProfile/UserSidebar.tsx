@@ -8,6 +8,7 @@ interface UserSidebarProps {
   userName?: string;
   onLogout: () => void;
   onOptionSelect?: (option: string) => void;
+  onManageAccessRoleSelect?: (role: string) => void;
 }
 
 const menuOptions = [
@@ -31,7 +32,7 @@ const accessRoles = [
   'QC Manager',
 ];
 
-const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, userName = 'Admin', onLogout, onOptionSelect }) => {
+const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, userName = 'Admin', onLogout, onOptionSelect, onManageAccessRoleSelect }) => {
   const [manageAccessMode, setManageAccessMode] = useState(false);
 
   return (
@@ -56,13 +57,20 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, userName = 'Ad
           <div className="bg-blue-100 rounded-full p-6 mb-2">
             <img src={manageAccessMode ? settingsIcon : userIcon} alt="User" className="h-16 w-16" />
           </div>
-          <div className="text-xl font-semibold mb-6">{userName}</div>
+          <div className="text-xl font-semibold mb-6">
+            {manageAccessMode ? "Manage Access" : userName}
+          </div>
           <div className="w-full flex flex-col gap-0">
             {manageAccessMode ? (
               <>
                 {accessRoles.map(role => (
                   <React.Fragment key={role}>
-                    <button className="w-full text-left px-6 py-3 text-base font-medium hover:bg-blue-50 focus:outline-none hover:cursor-pointer">
+                    <button
+                      className="w-full text-left px-6 py-3 text-base font-medium hover:bg-blue-50 focus:outline-none hover:cursor-pointer"
+                      onClick={() => {
+                        if (onManageAccessRoleSelect) onManageAccessRoleSelect(role);
+                      }}
+                    >
                       {role}
                     </button>
                     <div className="border-b border-gray-200 mx-6" />

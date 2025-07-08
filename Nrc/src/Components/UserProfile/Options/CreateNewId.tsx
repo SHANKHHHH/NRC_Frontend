@@ -10,7 +10,11 @@ const roleOptions = [
   { label: "Printing", value: "printing" },
 ];
 
-const CreateNewId: React.FC = () => {
+interface CreateNewIdProps {
+  onClose: () => void;
+}
+
+const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose }) => {
   const [form, setForm] = useState({
     name: "",
     phone: "",
@@ -126,6 +130,13 @@ const CreateNewId: React.FC = () => {
           {loading ? "Creating..." : "Create ID"}
         </button>
       </form>
+      <button
+        className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+        onClick={onClose}
+        aria-label="Close"
+      >
+        &times;
+      </button>
     </div>
   );
 };
