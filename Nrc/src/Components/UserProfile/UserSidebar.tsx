@@ -57,7 +57,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, userName = 'Ad
           <div className="bg-blue-100 rounded-full p-6 mb-2">
             <img src={manageAccessMode ? settingsIcon : userIcon} alt="User" className="h-16 w-16" />
           </div>
-          <div className="text-xl font-semibold mb-6">{userName}</div>
+          <div className="text-xl font-semibold mb-6">
+            {manageAccessMode ? "Manage Access" : userName}
+          </div>
           <div className="w-full flex flex-col gap-0">
             {manageAccessMode ? (
               <>
