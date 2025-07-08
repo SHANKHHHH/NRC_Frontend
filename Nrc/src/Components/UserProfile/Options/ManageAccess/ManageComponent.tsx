@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import deleteIcon from '../../../../assets/Icons/delete.svg';
+import CreateNewId from '../CreateNewId'; // Adjust the import path as needed
 
 // Map roles to their API endpoints
 const roleEndpoints: Record<string, string | undefined> = {
@@ -29,6 +30,7 @@ const ManageComponent: React.FC<ManageComponentProps> = ({ role, onClose }) => {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [showCreateUser, setShowCreateUser] = useState(false);
 
   useEffect(() => {
     setLoading(true);
@@ -104,11 +106,29 @@ const ManageComponent: React.FC<ManageComponentProps> = ({ role, onClose }) => {
             </div>
           )}
           <div className="w-full flex justify-end mt-6">
-            <button className="bg-[#00AEEF] text-white px-6 py-2 rounded-lg font-semibold text-base hover:bg-[#0099cc] transition hover:cursor-pointer shadow" onClick={() => {/* handle add user */}}>
+            <button
+              className="bg-[#00AEEF] text-white px-6 py-2 rounded-lg font-semibold text-base hover:bg-[#0099cc] transition hover:cursor-pointer shadow"
+              onClick={() => setShowCreateUser(true)}
+            >
               Add User
             </button>
           </div>
         </div>
+        {/* Add User Modal */}
+        {showCreateUser && (
+          <div className="fixed inset-0 z-60 flex items-center justify-center backdrop-blur-sm bg-transparent bg-opacity-40">
+            <div className="relative">
+              <button
+                className="absolute top-2 right-2 text-gray-500 hover:text-gray-700 text-2xl font-bold"
+                onClick={() => setShowCreateUser(false)}
+                aria-label="Close"
+              >
+                &times;
+              </button>
+              <CreateNewId onClose={() => setShowCreateUser(false)} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

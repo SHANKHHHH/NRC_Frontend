@@ -157,7 +157,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
             >
               &times;
             </button>
-            <CreateNewId />
+            <CreateNewId onClose={() => setShowCreateId(false)} />
           </div>
         </div>
       )}
