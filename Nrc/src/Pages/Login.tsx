@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Logo from "../assets/Login/logo.jpg";
 
 /**
@@ -11,9 +12,18 @@ interface LoginFormData {
 }
 
 /**
+ * Props for Login component
+ */
+interface LoginProps {
+  setIsAuthenticated: (value: boolean) => void;
+}
+
+/**
  * Login Component
  */
-export default function Login() {
+export default function Login({ setIsAuthenticated }: LoginProps) {
+  const navigate = useNavigate();
+  
   // ---------------------- State Declarations ---------------------- //
   const [formData, setFormData] = useState<LoginFormData>({
     phone: "",
@@ -60,6 +70,18 @@ export default function Login() {
       if (response.status === 200) {
         setSubmitStatus("success");
         setFormData({ phone: "", password: "" }); // Clear form
+        
+        // Check if user is admin (you can modify this logic based on your API response)
+        const userData = response.data;
+        if (userData.role === 'admin' || userData.isAdmin) {
+          // Set authentication state and redirect to dashboard
+          setIsAuthenticated(true);
+          navigate('/dashboard');
+        } else {
+          // For non-admin users, you can handle differently
+          setSubmitStatus("error");
+          setTimeout(() => setSubmitStatus(null), 3000);
+        }
       } else {
         setSubmitStatus("error");
       }
@@ -68,8 +90,10 @@ export default function Login() {
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
-      // Reset status message after 3s
-      setTimeout(() => setSubmitStatus(null), 3000);
+      // Reset status message after 3s (only if not redirecting)
+      if (submitStatus !== "success") {
+        setTimeout(() => setSubmitStatus(null), 3000);
+      }
     }
   };
 
@@ -114,7 +138,7 @@ export default function Login() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#00AEEF] hover:bg-[#0095cc] text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center"
+              className="w-full bg-[#00AEEF] hover:bg-[#0095cc] text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center hover:cursor-pointer"
             >
               {isSubmitting && (
                 <svg
@@ -139,6 +163,18 @@ export default function Login() {
                 </svg>
               )}
               {isSubmitting ? "Logging in..." : "Login"}
+            </button>
+
+            {/* Temporary Admin Login Button for Testing */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsAuthenticated(true);
+                navigate('/dashboard');
+              }}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 hover:cursor-pointer"
+            >
+              Admin Login (Test)
             </button>
 
             {/* Status Messages */}

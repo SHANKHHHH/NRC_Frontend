@@ -21,9 +21,10 @@ const tabItems = [
 interface HeaderProps {
   tabValue: string;
   setTabValue: (value: string) => void;
+  onLogout: () => void;
 }
 
-const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
+const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateId, setShowCreateId] = useState(false);
@@ -104,7 +105,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue }) => {
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         userName="Admin"
-        onLogout={() => {/* handle logout */}}
+        onLogout={onLogout}
         onOptionSelect={(option) => {
           if (option === "Create new ID") {
             setShowCreateId(true);
