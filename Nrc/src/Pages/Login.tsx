@@ -1,5 +1,6 @@
 import { useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 import Logo from "../assets/Login/logo.jpg";
 
 /**
@@ -8,16 +9,28 @@ import Logo from "../assets/Login/logo.jpg";
 interface LoginFormData {
   phone: string;
   password: string;
+  role: string; // <-- Add role to form data
+}
+
+/**
+ * Props for Login component
+ */
+interface LoginProps {
+  setIsAuthenticated: (value: boolean) => void;
+  setUserRole: (role: string | null) => void;
 }
 
 /**
  * Login Component
  */
-export default function Login() {
+export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
+  const navigate = useNavigate();
+  
   // ---------------------- State Declarations ---------------------- //
   const [formData, setFormData] = useState<LoginFormData>({
     phone: "",
     password: "",
+    role: "printing_manager", // default for testing
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -29,7 +42,7 @@ export default function Login() {
    * Handle input changes
    * @param e - Input change event
    */
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -59,7 +72,20 @@ export default function Login() {
       // If login successful
       if (response.status === 200) {
         setSubmitStatus("success");
-        setFormData({ phone: "", password: "" }); // Clear form
+        setFormData({ phone: "", password: "", role: "printing_manager" }); // Clear form
+        
+        // Check if user is admin (you can modify this logic based on your API response)
+        const userData = response.data;
+        if (userData.role === 'admin' || userData.isAdmin) {
+          // Set authentication state and redirect to dashboard
+          setIsAuthenticated(true);
+          setUserRole(userData.role); // <-- Use the role from your API/user data
+          navigate('/dashboard');
+        } else {
+          // For non-admin users, you can handle differently
+          setSubmitStatus("error");
+          setTimeout(() => setSubmitStatus(null), 3000);
+        }
       } else {
         setSubmitStatus("error");
       }
@@ -68,8 +94,10 @@ export default function Login() {
       setSubmitStatus("error");
     } finally {
       setIsSubmitting(false);
-      // Reset status message after 3s
-      setTimeout(() => setSubmitStatus(null), 3000);
+      // Reset status message after 3s (only if not redirecting)
+      if (submitStatus !== "success") {
+        setTimeout(() => setSubmitStatus(null), 3000);
+      }
     }
   };
 
@@ -110,11 +138,23 @@ export default function Login() {
               required
             />
 
+            {/* Role Selection Dropdown */}
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+            >
+              <option value="admin">Admin</option>
+              <option value="printing_manager">Printing Manager</option>
+              {/* Add more roles as needed */}
+            </select>
+
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-[#00AEEF] hover:bg-[#0095cc] text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center"
+              className="w-full bg-[#00AEEF] hover:bg-[#0095cc] text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center hover:cursor-pointer"
             >
               {isSubmitting && (
                 <svg
@@ -139,6 +179,19 @@ export default function Login() {
                 </svg>
               )}
               {isSubmitting ? "Logging in..." : "Login"}
+            </button>
+
+            {/* Temporary Login Button for Testing */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsAuthenticated(true);
+                setUserRole(formData.role); // Use the selected role from the dropdown
+                navigate('/dashboard');
+              }}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 hover:cursor-pointer"
+            >
+              Test Login as {formData.role === 'admin' ? 'Admin' : 'Printing Manager'}
             </button>
 
             {/* Status Messages */}
