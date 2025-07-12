@@ -9,6 +9,7 @@ import Logo from "../assets/Login/logo.jpg";
 interface LoginFormData {
   phone: string;
   password: string;
+  role: string; // <-- Add role to form data
 }
 
 /**
@@ -16,18 +17,20 @@ interface LoginFormData {
  */
 interface LoginProps {
   setIsAuthenticated: (value: boolean) => void;
+  setUserRole: (role: string | null) => void;
 }
 
 /**
  * Login Component
  */
-export default function Login({ setIsAuthenticated }: LoginProps) {
+export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
   const navigate = useNavigate();
   
   // ---------------------- State Declarations ---------------------- //
   const [formData, setFormData] = useState<LoginFormData>({
     phone: "",
     password: "",
+    role: "printing_manager", // default for testing
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -39,7 +42,7 @@ export default function Login({ setIsAuthenticated }: LoginProps) {
    * Handle input changes
    * @param e - Input change event
    */
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
@@ -69,13 +72,14 @@ export default function Login({ setIsAuthenticated }: LoginProps) {
       // If login successful
       if (response.status === 200) {
         setSubmitStatus("success");
-        setFormData({ phone: "", password: "" }); // Clear form
+        setFormData({ phone: "", password: "", role: "printing_manager" }); // Clear form
         
         // Check if user is admin (you can modify this logic based on your API response)
         const userData = response.data;
         if (userData.role === 'admin' || userData.isAdmin) {
           // Set authentication state and redirect to dashboard
           setIsAuthenticated(true);
+          setUserRole(userData.role); // <-- Use the role from your API/user data
           navigate('/dashboard');
         } else {
           // For non-admin users, you can handle differently
@@ -134,6 +138,18 @@ export default function Login({ setIsAuthenticated }: LoginProps) {
               required
             />
 
+            {/* Role Selection Dropdown */}
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+            >
+              <option value="admin">Admin</option>
+              <option value="printing_manager">Printing Manager</option>
+              {/* Add more roles as needed */}
+            </select>
+
             {/* Submit Button */}
             <button
               type="submit"
@@ -165,16 +181,17 @@ export default function Login({ setIsAuthenticated }: LoginProps) {
               {isSubmitting ? "Logging in..." : "Login"}
             </button>
 
-            {/* Temporary Admin Login Button for Testing */}
+            {/* Temporary Login Button for Testing */}
             <button
               type="button"
               onClick={() => {
                 setIsAuthenticated(true);
+                setUserRole(formData.role); // Use the selected role from the dropdown
                 navigate('/dashboard');
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 hover:cursor-pointer"
             >
-              Admin Login (Test)
+              Test Login as {formData.role === 'admin' ? 'Admin' : 'Printing Manager'}
             </button>
 
             {/* Status Messages */}

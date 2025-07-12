@@ -10,6 +10,7 @@ const Dashboard = lazy(() => import('./Pages/Dashboard/Dashboard'));
 function App() {
   const [tabValue, setTabValue] = useState('dashboard');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   const handleLogout = () => setIsAuthenticated(false);
 
@@ -22,14 +23,14 @@ function App() {
             element={
               isAuthenticated ? 
                 <Navigate to="/dashboard" replace /> : 
-                <Login setIsAuthenticated={setIsAuthenticated} />
+                <Login setIsAuthenticated={setIsAuthenticated} setUserRole={setUserRole} />
             } 
           />
           <Route 
             path="/dashboard" 
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
-                <Header tabValue={tabValue} setTabValue={setTabValue} onLogout={handleLogout} />
+                <Header tabValue={tabValue} setTabValue={setTabValue} onLogout={handleLogout} role={userRole || 'admin'} />
                 <Dashboard tabValue={tabValue} setTabValue={setTabValue} />
               </ProtectedRoute>
             } 

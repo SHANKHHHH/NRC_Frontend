@@ -9,22 +9,35 @@ import userIcon from '../../../assets/Icons/user.svg';
 import UserSidebar from '../../UserProfile/UserSidebar';
 import ManageComponent from '../../UserProfile/Options/ManageAccess/ManageComponent';
 
-const tabItems = [
-  { label: 'Dashboard', value: 'dashboard' },
-  { label: 'Planner', value: 'planner' },
-  { label: 'Production Head', value: 'production' },
-  { label: 'Dispatch Head', value: 'dispatch' },
-  { label: 'QC Manager', value: 'qc' },
-  { label: 'Printing', value: 'printing' },
-];
-
 interface HeaderProps {
   tabValue: string;
   setTabValue: (value: string) => void;
   onLogout: () => void;
+  role: string; // <-- Add this prop
 }
 
-const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout }) => {
+const allTabSets: { [key: string]: { label: string; value: string }[] } = {
+  admin: [
+    { label: 'Dashboard', value: 'dashboard' },
+    { label: 'Planner', value: 'planner' },
+    { label: 'Production Head', value: 'production' },
+    { label: 'Dispatch Head', value: 'dispatch' },
+    { label: 'QC Manager', value: 'qc' },
+    { label: 'Printing', value: 'printing' },
+  ],
+  printing_manager: [
+    { label: 'Dashboard', value: 'dashboard' },
+    { label: 'Jobs', value: 'jobs' },
+    { label: 'Notifications', value: 'notifications' },
+  ],
+  // ...other roles
+};
+
+const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }) => {
+  // Pick the right tab set for the role, default to admin if not found
+  const normalizedRole = (role || '').toLowerCase().replace(' ', '_');
+  const tabItems = allTabSets[normalizedRole] || allTabSets['admin'];
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateId, setShowCreateId] = useState(false);
