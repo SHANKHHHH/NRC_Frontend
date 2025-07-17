@@ -7,6 +7,7 @@ const ProductionUpdate = lazy(() => import('../../Components/Production_Head/Pro
 const DispatchOverview = lazy(() => import('../../Components/DispatchHead/DispatchOverview'));
 const DispatchSummary = lazy(() => import('../../Components/DispatchHead/DispatchSummary'));
 import JobCard from '../../Components/PrintingMgr/job';
+import StopScreen from '../../Components/PrintingMgr/options/stop';
 
 interface DashboardProps {
   tabValue: string;
@@ -29,8 +30,11 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
   const [jobs, setJobs] = useState<Job[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showStopScreen, setShowStopScreen] = useState(false);
+  const [activeJob, setActiveJob] = useState<Job | null>(null);
 
   useEffect(() => {
+    console.log('tabValue:', tabValue);
     if (tabValue !== 'jobs') return;
     setLoading(true);
     setError(null);
@@ -63,6 +67,10 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
     }, 1000);
   }, [tabValue]);
 
+  useEffect(() => {
+    console.log('activeJob:', activeJob);
+  }, [activeJob]);
+
   return (
     <div className="px-4 sm:px-8 py-8 bg-[#f7f7f7] min-h-screen">
       <Suspense fallback={<div>Loading...</div>}>
@@ -87,37 +95,42 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
         {/* Render JobCards in a responsive grid when jobs tab is selected */}
         {tabValue === 'jobs' && (
           <div className="w-full flex flex-col items-center">
-            {loading && <div>Loading jobs...</div>}
-            {error && <div className="text-red-500">{error}</div>}
-            <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4 justify-items-center">
-              {jobs && jobs.length > 0 ? (
-                jobs.map(job => (
-                  <JobCard
-                    key={job.id}
-                    company={job.company}
-                    jobId={job.jobId}
-                    boardSize={job.boardSize || '64×64'}
-                    gsm={job.gsm || 'xyz'}
-                    artwork={job.artwork || 'id_123456'}
-                    approvalDate={job.approvalDate || '15/04/2025'}
-                    dispatchDate={job.dispatchDate || '15/04/2025'}
-                    onStart={() => alert(`Job ${job.jobId} Started!`)}
-                  />
-                ))
-              ) : (
-                // Placeholder card if no jobs
-                <JobCard
-                  company="Jockey India"
-                  jobId="id_234566"
-                  boardSize="64×64"
-                  gsm="xyz"
-                  artwork="id_123456"
-                  approvalDate="15/04/2025"
-                  dispatchDate="15/04/2025"
-                  onStart={() => alert('Job Started!')}
-                />
-              )}
-            </div>
+            {showStopScreen ? (
+              <StopScreen onBack={() => setShowStopScreen(false)} />
+            ) : (
+              <>
+                {loading && <div>Loading jobs...</div>}
+                {error && <div className="text-red-500">{error}</div>}
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4 justify-items-center">
+                  {jobs && jobs.length > 0 ? (
+                    jobs.map(job => (
+                      <JobCard
+                        key={job.id}
+                        company={job.company}
+                        jobId={job.jobId}
+                        boardSize={job.boardSize}
+                        gsm={job.gsm}
+                        artwork={job.artwork}
+                        approvalDate={job.approvalDate}
+                        dispatchDate={job.dispatchDate}
+                        onStop={() => setShowStopScreen(true)}
+                      />
+                    ))
+                  ) : (
+                    <JobCard
+                      company="Jockey India"
+                      jobId="id_234566"
+                      boardSize="64×64"
+                      gsm="xyz"
+                      artwork="id_123456"
+                      approvalDate="15/04/2025"
+                      dispatchDate="15/04/2025"
+                      onStop={() => setShowStopScreen(true)}
+                    />
+                  )}
+                </div>
+              </>
+            )}
           </div>
         )}
         {/* Add other tab content here if needed */}
