@@ -34,7 +34,6 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
   const [activeJob, setActiveJob] = useState<Job | null>(null);
 
   useEffect(() => {
-    console.log('tabValue:', tabValue);
     if (tabValue !== 'jobs') return;
     setLoading(true);
     setError(null);
@@ -68,7 +67,6 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
   }, [tabValue]);
 
   useEffect(() => {
-    console.log('activeJob:', activeJob);
   }, [activeJob]);
 
   return (

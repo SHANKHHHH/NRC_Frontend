@@ -13,8 +13,32 @@ interface HeaderProps {
   tabValue: string;
   setTabValue: (value: string) => void;
   onLogout: () => void;
-  role: string; // <-- Add this prop
+  role: string; // <-- This is correct
 }
+
+const sidebarConfig: {
+  [key: string]: { displayName: string; options: { label: string; tab: string }[] }
+} = {
+  admin: {
+    displayName: "Admin",
+    options: [
+      { label: "Dashboard", tab: "dashboard" },
+      { label: "Planner", tab: "planner" },
+      { label: "Notifications", tab: "notifications" },
+      { label: "Dispatch Executive", tab: "dispatch" },
+      // ...other admin options
+    ]
+  },
+  printing_manager: {
+    displayName: "Printing Manager",
+    options: [
+      { label: "Dashboard", tab: "dashboard" },
+      { label: "Jobs", tab: "jobs" },
+      { label: "Notifications", tab: "notifications" }
+    ]
+  },
+  // ...other roles
+};
 
 const allTabSets: { [key: string]: { label: string; value: string }[] } = {
   admin: [
@@ -24,6 +48,8 @@ const allTabSets: { [key: string]: { label: string; value: string }[] } = {
     { label: 'Dispatch Head', value: 'dispatch' },
     { label: 'QC Manager', value: 'qc' },
     { label: 'Printing', value: 'printing' },
+    { label: 'Notifications', value: 'notifications' },
+    // ...add any others you had
   ],
   printing_manager: [
     { label: 'Dashboard', value: 'dashboard' },
@@ -54,7 +80,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
         <TabProvider value={tabValue}>
           <div className="hidden sm:flex flex-1 justify-center">
             <TabList value={tabValue} onChange={setTabValue}>
-              {tabItems.map(tab => (
+              {tabItems.map((tab: { label: string; value: string }) => (
                 <Tab key={tab.value} label={tab.label} value={tab.value} onChange={() => {}} />
               ))}
             </TabList>
@@ -94,7 +120,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
               onChange={value => { setTabValue(value); setMenuOpen(false); }}
               direction="vertical"
             >
-              {tabItems.map(tab => (
+              {tabItems.map((tab: { label: string; value: string }) => (
                 <Tab key={tab.value} label={tab.label} value={tab.value} onChange={() => {}} />
               ))}
             </TabList>
@@ -117,41 +143,47 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
       <UserSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        userName="Admin"
+        role={role} // <-- THIS IS CRITICAL
         onLogout={onLogout}
         onOptionSelect={(option) => {
-          if (option === "Create new ID") {
-            setShowCreateId(true);
+          if (normalizedRole === 'admin') {
+            // Use your original switch/case for admin
+            switch (option) {
+              case "Dashboard":
+                setTabValue("dashboard");
+                break;
+              case "Planner":
+                setTabValue("planner");
+                break;
+              case "Production Head":
+                setTabValue("production");
+                break;
+              case "Dispatch Head":
+              case "Dispatch Executive":
+                setTabValue("dispatch");
+                break;
+              case "QC Manager":
+                setTabValue("qc");
+                break;
+              case "Printing":
+              case "Printing Manager":
+                setTabValue("printing");
+                break;
+              case "Notifications":
+                setShowNotifications(true);
+                break;
+              case "Create new ID":
+                setShowCreateId(true);
+                break;
+              // ...other admin options
+            }
             setSidebarOpen(false);
             setMenuOpen(false);
-          } else if (option === "Notifications") {
-            setShowNotifications(true);
+          } else if (normalizedRole === 'printing_manager') {
+            // Use config-driven for printing manager
+            const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
+            if (found) setTabValue(found.tab);
             setSidebarOpen(false);
-            setMenuOpen(false);
-          } else if (option === "Planner") {
-            setTabValue('planner');
-            setSidebarOpen(false);
-            setMenuOpen(false);
-          } else if (option === "Production Head") {
-            setTabValue('production');
-            setSidebarOpen(false);
-            setMenuOpen(false);
-          } else if (option === "Dispatch Head" || option === "Dispatch Executive") {
-            setTabValue('dispatch');
-            setSidebarOpen(false);
-            setMenuOpen(false);
-          } else if (option === "QC Manager") {
-            setTabValue('qc');
-            setSidebarOpen(false);
-            setMenuOpen(false);
-          } else if (option === "Printing" || option === "Printing Manager") {
-            setTabValue('printing');
-            setSidebarOpen(false);
-            setMenuOpen(false);
-          } else if (option === "Dashboard") {
-            setTabValue('dashboard');
-            setSidebarOpen(false);
-            setMenuOpen(false);
           }
         }}
         onManageAccessRoleSelect={(role) => {
