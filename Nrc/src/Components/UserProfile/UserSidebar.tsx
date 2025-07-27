@@ -30,6 +30,14 @@ const sidebarConfig: Record<string, { displayName: string; options: string[] }> 
     displayName: 'Printing Manager',
     options: ['Dashboard', 'Jobs', 'Notifications'],
   },
+  dispatch_executive: {
+    displayName: 'Dispatch Executive',
+    options: ['Dashboard', 'Jobs', 'Notifications'],
+  },
+  production_head: {
+    displayName: 'Production Head',
+    options: ['Dashboard', 'Jobs', 'Notifications'],
+  },
   // Add more roles as needed
 };
 

@@ -8,10 +8,16 @@ const DispatchOverview = lazy(() => import('../../Components/DispatchHead/Dispat
 const DispatchSummary = lazy(() => import('../../Components/DispatchHead/DispatchSummary'));
 import JobCard from '../../Components/PrintingMgr/job';
 import StopScreen from '../../Components/PrintingMgr/options/stop';
+//import DispatchExecutiveDashboard from '../../Components/Dispatch_Executive/dispatch_dashboard';
+import DispatchExecutiveJobs from '../../Components/Dispatch_Executive /dispatch_jobs';
+//import DispatchExecutiveNotifications from '../../Components/Dispatch_Executive/dispatch_notifications';
+import ReadyDispatchForm from '../../Components/Dispatch_Executive /ReadytoDispatch/readyDispatch';
+import ProductionSteps from '../../Components/ProductionHead/productionSteps/production_steps';
 
 interface DashboardProps {
   tabValue: string;
   setTabValue: (value: string) => void;
+  role: string;
 }
 
 // Example job type (adjust as per your backend response)
@@ -26,18 +32,19 @@ interface Job {
   dispatchDate: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
-  const [jobs, setJobs] = useState<Job[] | null>(null);
+const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) => {
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showStopScreen, setShowStopScreen] = useState(false);
   const [activeJob, setActiveJob] = useState<Job | null>(null);
+  const [showReadyDispatch, setShowReadyDispatch] = useState(false);
+  const [showProductionSteps, setShowProductionSteps] = useState(false);
 
   useEffect(() => {
     if (tabValue !== 'jobs') return;
     setLoading(true);
     setError(null);
-    // Dummy placeholder data
     setTimeout(() => {
       setJobs([
         {
@@ -60,7 +67,6 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
           approvalDate: '16/04/2025',
           dispatchDate: '16/04/2025',
         },
-        // Add more dummy jobs if desired
       ]);
       setLoading(false);
     }, 1000);
@@ -90,8 +96,8 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
             <DispatchSummary />
           </>
         )}
-        {/* Render JobCards in a responsive grid when jobs tab is selected */}
-        {tabValue === 'jobs' && (
+        {/* Printing Manager jobs tab */}
+        {role === 'printing_manager' && tabValue === 'jobs' && (
           <div className="w-full flex flex-col items-center">
             {showStopScreen ? (
               <StopScreen onBack={() => setShowStopScreen(false)} />
@@ -100,7 +106,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
                 {loading && <div>Loading jobs...</div>}
                 {error && <div className="text-red-500">{error}</div>}
                 <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4 justify-items-center">
-                  {jobs && jobs.length > 0 ? (
+                  {jobs.length > 0 ? (
                     jobs.map(job => (
                       <JobCard
                         key={job.id}
@@ -124,6 +130,55 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue }) => {
                       approvalDate="15/04/2025"
                       dispatchDate="15/04/2025"
                       onStop={() => setShowStopScreen(true)}
+                    />
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+        )}
+        {/* Dispatch Executive jobs tab */}
+        {role === 'dispatch_executive' && tabValue === 'jobs' && (
+          showReadyDispatch ? (
+            <ReadyDispatchForm onBack={() => setShowReadyDispatch(false)} />
+          ) : (
+              <DispatchExecutiveJobs jobs={jobs.length > 0 ? jobs : undefined} onReadyDispatch={() => setShowReadyDispatch(true)} />
+          )
+        )}
+        {/* Production Head jobs tab */}
+        {role === 'production_head' && tabValue === 'jobs' && (
+          <div className="w-full flex flex-col items-center">
+            {showProductionSteps ? (
+              <ProductionSteps onBack={() => setShowProductionSteps(false)} />
+            ) : (
+              <>
+                {loading && <div>Loading jobs...</div>}
+                {error && <div className="text-red-500">{error}</div>}
+                <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4 justify-items-center">
+                  {jobs.length > 0 ? (
+                    jobs.map(job => (
+                      <JobCard
+                        key={job.id}
+                        company={job.company}
+                        jobId={job.jobId}
+                        boardSize={job.boardSize}
+                        gsm={job.gsm}
+                        artwork={job.artwork}
+                        approvalDate={job.approvalDate}
+                        dispatchDate={job.dispatchDate}
+                        onStop={() => setShowProductionSteps(true)}
+                      />
+                    ))
+                  ) : (
+                    <JobCard
+                      company="Jockey India"
+                      jobId="id_234566"
+                      boardSize="64×64"
+                      gsm="xyz"
+                      artwork="id_123456"
+                      approvalDate="15/04/2025"
+                      dispatchDate="15/04/2025"
+                      onStop={() => setShowProductionSteps(true)}
                     />
                   )}
                 </div>

@@ -18,7 +18,7 @@ function App() {
     <BrowserRouter>
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          <Route 
+          <Route
             path="/login" 
             element={
               isAuthenticated ? 
@@ -31,7 +31,7 @@ function App() {
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
                 <Header tabValue={tabValue} setTabValue={setTabValue} onLogout={handleLogout} role={userRole || 'admin'} />
-                <Dashboard tabValue={tabValue} setTabValue={setTabValue} />
+                <Dashboard tabValue={tabValue} setTabValue={setTabValue} role={userRole || 'admin'} />
               </ProtectedRoute>
             } 
           />

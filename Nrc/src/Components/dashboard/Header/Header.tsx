@@ -37,6 +37,19 @@ const sidebarConfig: {
       { label: "Notifications", tab: "notifications" }
     ]
   },
+  production_head: {
+    displayName: "Production Head",
+    options: [
+      { label: "Dashboard", tab: "dashboard" },
+      { label: "Jobs", tab: "jobs" },
+      { label: "Notifications", tab: "notifications" }
+    ]
+  },
+  dispatch_executive: [
+    { label: 'Dashboard', value: 'dashboard' },
+    { label: 'Jobs', value: 'jobs' },
+    { label: 'Notifications', value: 'notifications' },
+  ],
   // ...other roles
 };
 
@@ -52,6 +65,16 @@ const allTabSets: { [key: string]: { label: string; value: string }[] } = {
     // ...add any others you had
   ],
   printing_manager: [
+    { label: 'Dashboard', value: 'dashboard' },
+    { label: 'Jobs', value: 'jobs' },
+    { label: 'Notifications', value: 'notifications' },
+  ],
+  production_head: [
+    { label: 'Dashboard', value: 'dashboard' },
+    { label: 'Jobs', value: 'jobs' },
+    { label: 'Notifications', value: 'notifications' },
+  ],
+  dispatch_executive: [
     { label: 'Dashboard', value: 'dashboard' },
     { label: 'Jobs', value: 'jobs' },
     { label: 'Notifications', value: 'notifications' },
@@ -183,6 +206,24 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
             // Use config-driven for printing manager
             const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
             if (found) setTabValue(found.tab);
+            setSidebarOpen(false);
+          } else if (normalizedRole === 'production_head') {
+            const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
+            if (found) setTabValue(found.tab);
+            setSidebarOpen(false);
+          } else if (normalizedRole === 'dispatch_executive') {
+            switch (option) {
+              case 'Dashboard':
+                setTabValue('dashboard');
+                break;
+              case 'Jobs':
+                setTabValue('jobs');
+                break;
+              case 'Notifications':
+                setTabValue('notifications');
+                break;
+              // ...add more if needed
+            }
             setSidebarOpen(false);
           }
         }}

@@ -147,6 +147,8 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
             >
               <option value="admin">Admin</option>
               <option value="printing_manager">Printing Manager</option>
+              <option value="dispatch_executive">Dispatch Executive</option>
+              <option value="production_head">Production Head</option>
               {/* Add more roles as needed */}
             </select>
 
@@ -191,7 +193,11 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 hover:cursor-pointer"
             >
-              Test Login as {formData.role === 'admin' ? 'Admin' : 'Printing Manager'}
+              Test Login as {formData.role
+                .split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ')
+              }
             </button>
 
             {/* Status Messages */}
