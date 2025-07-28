@@ -7,9 +7,9 @@ import Logo from "../assets/Login/logo.jpg";
  * Type for form data used in login
  */
 interface LoginFormData {
-  phone: string;
+  id: string;
   password: string;
-  role: string; // <-- Add role to form data
+  role: string; // For UI display only
 }
 
 /**
@@ -28,7 +28,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
   
   // ---------------------- State Declarations ---------------------- //
   const [formData, setFormData] = useState<LoginFormData>({
-    phone: "",
+    id: "",
     password: "",
     role: "printing_manager", // default for testing
   });
@@ -55,49 +55,52 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { phone, password } = formData;
+    const { id, password } = formData;
 
     try {
       // Simple frontend validation
-      if (!phone.trim() || !password.trim()) {
+      if (!id.trim() || !password.trim()) {
         throw new Error("All fields are required.");
       }
 
-      // API endpoint (secured via environment variable)
-      const API_ENDPOINT = `${import.meta.env.VITE_API_URL}/auth/login`;
+      // API endpoint
+      const API_ENDPOINT = "https://nrc-backend-his4.onrender.com/api/auth/login";
 
-      // Make POST request to backend
-      const response = await axios.post(API_ENDPOINT, { phone, password });
+      // Make POST request to backend with the expected payload format
+      const response = await axios.post(API_ENDPOINT, { id, password });
 
       // If login successful
-      if (response.status === 200) {
+      if (response.data.success) {
         setSubmitStatus("success");
-        setFormData({ phone: "", password: "", role: "printing_manager" }); // Clear form
         
-        // Check if user is admin (you can modify this logic based on your API response)
-        const userData = response.data;
-        if (userData.role === 'admin' || userData.isAdmin) {
-          // Set authentication state and redirect to dashboard
-          setIsAuthenticated(true);
-          setUserRole(userData.role); // <-- Use the role from your API/user data
-          navigate('/dashboard');
-        } else {
-          // For non-admin users, you can handle differently
-          setSubmitStatus("error");
-          setTimeout(() => setSubmitStatus(null), 3000);
-        }
+        // Store the access token in localStorage
+        localStorage.setItem("accessToken", response.data.acessToken);
+        
+        // Store user data in localStorage for persistence
+        localStorage.setItem("userData", JSON.stringify(response.data.data));
+        
+        // Get user data from response
+        const userData = response.data.data;
+        
+        // Set authentication state and user role
+        setIsAuthenticated(true);
+        setUserRole(userData.role);
+        
+        // Clear form
+        setFormData({ id: "", password: "", role: "printing_manager" });
+        
+        // Navigate to dashboard
+        navigate('/dashboard');
       } else {
         setSubmitStatus("error");
+        setTimeout(() => setSubmitStatus(null), 3000);
       }
     } catch (error) {
       console.error("Login Error:", error);
       setSubmitStatus("error");
+      setTimeout(() => setSubmitStatus(null), 3000);
     } finally {
       setIsSubmitting(false);
-      // Reset status message after 3s (only if not redirecting)
-      if (submitStatus !== "success") {
-        setTimeout(() => setSubmitStatus(null), 3000);
-      }
     }
   };
 
@@ -116,13 +119,13 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <h2 className="text-2xl font-bold text-center text-[#00AEEF]">Login</h2>
 
-            {/* Phone Input */}
+            {/* ID Input */}
             <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
+              type="text"
+              name="id"
+              value={formData.id}
               onChange={handleChange}
-              placeholder="Phone Number"
+              placeholder="Employee ID"
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
               required
             />
@@ -138,7 +141,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
               required
             />
 
-            {/* Role Selection Dropdown */}
+            {/* Role Selection Dropdown (for UI only) */}
             <select
               name="role"
               value={formData.role}
@@ -149,6 +152,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
               <option value="printing_manager">Printing Manager</option>
               <option value="dispatch_executive">Dispatch Executive</option>
               <option value="production_head">Production Head</option>
+              <option value="planner">Planner</option>
               {/* Add more roles as needed */}
             </select>
 
@@ -187,8 +191,19 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
             <button
               type="button"
               onClick={() => {
+                // Simulate successful login with test data
+                const testUserData = {
+                  id: formData.role === "admin" ? "NRC001" : "NRC002",
+                  userActive: true,
+                  role: formData.role
+                };
+                
+                // Store test data in localStorage
+                localStorage.setItem("accessToken", "test-token-for-development");
+                localStorage.setItem("userData", JSON.stringify(testUserData));
+                
                 setIsAuthenticated(true);
-                setUserRole(formData.role); // Use the selected role from the dropdown
+                setUserRole(formData.role);
                 navigate('/dashboard');
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 hover:cursor-pointer"

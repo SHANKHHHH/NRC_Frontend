@@ -45,11 +45,23 @@ const sidebarConfig: {
       { label: "Notifications", tab: "notifications" }
     ]
   },
-  dispatch_executive: [
-    { label: 'Dashboard', value: 'dashboard' },
-    { label: 'Jobs', value: 'jobs' },
-    { label: 'Notifications', value: 'notifications' },
-  ],
+  dispatch_executive: {
+    displayName: "Dispatch Executive",
+    options: [
+      { label: "Dashboard", tab: "dashboard" },
+      { label: "Jobs", tab: "jobs" },
+      { label: "Notifications", tab: "notifications" }
+    ]
+  },
+  planner: {
+    displayName: "Planner",
+    options: [
+      { label: "Dashboard", tab: "dashboard" },
+      { label: "Start New Job", tab: "start new job" },
+      { label: "Notifications", tab: "notifications" },
+      { label: "Jobs", tab: "jobs" }
+    ]
+  },
   // ...other roles
 };
 
@@ -79,12 +91,18 @@ const allTabSets: { [key: string]: { label: string; value: string }[] } = {
     { label: 'Jobs', value: 'jobs' },
     { label: 'Notifications', value: 'notifications' },
   ],
+  planner: [
+    { label: 'Dashboard', value: 'dashboard' },
+    { label: 'Start New Job', value: 'start new job' },
+    { label: 'Notifications', value: 'notifications' },
+    { label: 'Jobs', value: 'jobs' },
+  ],
   // ...other roles
 };
 
 const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }) => {
   // Pick the right tab set for the role, default to admin if not found
-  const normalizedRole = (role || '').toLowerCase().replace(' ', '_');
+  const normalizedRole = (role || '').toLowerCase().replace(/ /g, '_');
   const tabItems = allTabSets[normalizedRole] || allTabSets['admin'];
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -104,7 +122,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
           <div className="hidden sm:flex flex-1 justify-center">
             <TabList value={tabValue} onChange={setTabValue}>
               {tabItems.map((tab: { label: string; value: string }) => (
-                <Tab key={tab.value} label={tab.label} value={tab.value} onChange={() => {}} />
+                <Tab key={tab.value} label={tab.label} value={tab.value} onChange={setTabValue} />
               ))}
             </TabList>
           </div>
@@ -144,7 +162,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
               direction="vertical"
             >
               {tabItems.map((tab: { label: string; value: string }) => (
-                <Tab key={tab.value} label={tab.label} value={tab.value} onChange={() => {}} />
+                <Tab key={tab.value} label={tab.label} value={tab.value} onChange={setTabValue} />
               ))}
             </TabList>
           </TabProvider>
@@ -202,29 +220,18 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
             }
             setSidebarOpen(false);
             setMenuOpen(false);
-          } else if (normalizedRole === 'printing_manager') {
-            // Use config-driven for printing manager
+          } else if (normalizedRole === 'printing_manager' || normalizedRole === 'production_head' || normalizedRole === 'dispatch_executive') {
+            // Use config-driven approach for these roles
             const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
             if (found) setTabValue(found.tab);
             setSidebarOpen(false);
-          } else if (normalizedRole === 'production_head') {
+            setMenuOpen(false);
+          } else if (normalizedRole === 'planner') {
+            // Handle planner role
             const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
             if (found) setTabValue(found.tab);
             setSidebarOpen(false);
-          } else if (normalizedRole === 'dispatch_executive') {
-            switch (option) {
-              case 'Dashboard':
-                setTabValue('dashboard');
-                break;
-              case 'Jobs':
-                setTabValue('jobs');
-                break;
-              case 'Notifications':
-                setTabValue('notifications');
-                break;
-              // ...add more if needed
-            }
-            setSidebarOpen(false);
+            setMenuOpen(false);
           }
         }}
         onManageAccessRoleSelect={(role) => {

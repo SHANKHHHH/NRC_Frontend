@@ -1,7 +1,7 @@
 import { Suspense, lazy, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
-import Header from './Components/dashboard/Header/Header';
+import Header from './Components/Navbar/Header/Header';
 import Login from './Pages/Login';
 import ProtectedRoute from './Routes/ProtectedRoute';
 

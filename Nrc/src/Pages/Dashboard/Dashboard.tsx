@@ -1,18 +1,22 @@
 // Nrc/src/Pages/Dashboard/Dashboard.tsx
 import React, { lazy, Suspense, useEffect, useState } from 'react';
-const OrderSummary = lazy(() => import('../../Components/Planner/OrderSummary'));
-const ProductionSchedule = lazy(() => import('../../Components/Planner/ProductionSchedule'));
-const Summary = lazy(() => import('../../Components/Production_Head/Summary'));
-const ProductionUpdate = lazy(() => import('../../Components/Production_Head/ProductionUpdate'));
-const DispatchOverview = lazy(() => import('../../Components/DispatchHead/DispatchOverview'));
-const DispatchSummary = lazy(() => import('../../Components/DispatchHead/DispatchSummary'));
-import JobCard from '../../Components/PrintingMgr/job';
-import StopScreen from '../../Components/PrintingMgr/options/stop';
+const OrderSummary = lazy(() => import('../../Components/Roles/Admin/Planner/OrderSummary'));
+const ProductionSchedule = lazy(() => import('../../Components/Roles/Admin/Planner/ProductionSchedule'));
+const Summary = lazy(() => import('../../Components/Roles/Admin/Production_Head/Summary'));
+const ProductionUpdate = lazy(() => import('../../Components/Roles/Admin/Production_Head/ProductionUpdate'));
+const DispatchOverview = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchOverview'));
+const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchSummary'));
+import JobCard from '../../Components/Roles/PrintingMgr/job';
+import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
 //import DispatchExecutiveDashboard from '../../Components/Dispatch_Executive/dispatch_dashboard';
-import DispatchExecutiveJobs from '../../Components/Dispatch_Executive /dispatch_jobs';
+import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';
 //import DispatchExecutiveNotifications from '../../Components/Dispatch_Executive/dispatch_notifications';
-import ReadyDispatchForm from '../../Components/Dispatch_Executive /ReadytoDispatch/readyDispatch';
-import ProductionSteps from '../../Components/ProductionHead/productionSteps/production_steps';
+import ReadyDispatchForm from '../../Components/Roles/Dispatch_Executive /ReadytoDispatch/readyDispatch';
+import ProductionSteps from '../../Components/Roles/ProductionHead/productionSteps/production_steps';
+import PlannerDashboard from '../../Components/Roles/Planner/Planner_dashboard';
+import StartNewJob from '../../Components/Roles/Planner/startNew_job';
+import PlannerNotifications from '../../Components/Roles/Planner/planner_notifications';
+import PlannerJobs from '../../Components/Roles/Planner/planner_jobs';
 
 interface DashboardProps {
   tabValue: string;
@@ -20,7 +24,6 @@ interface DashboardProps {
   role: string;
 }
 
-// Example job type (adjust as per your backend response)
 interface Job {
   id: string;
   company: string;
@@ -33,44 +36,34 @@ interface Job {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) => {
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([
+    {
+      id: '1',
+      company: 'Jockey India',
+      jobId: 'id_234566',
+      boardSize: '64×64',
+      gsm: 'xyz',
+      artwork: 'id_123456',
+      approvalDate: '15/04/2025',
+      dispatchDate: '15/04/2025',
+    },
+    {
+      id: '2',
+      company: 'Jockey India',
+      jobId: 'id_234567',
+      boardSize: '64×64',
+      gsm: 'xyz',
+      artwork: 'id_123457',
+      approvalDate: '16/04/2025',
+      dispatchDate: '16/04/2025',
+    },
+  ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showStopScreen, setShowStopScreen] = useState(false);
   const [activeJob, setActiveJob] = useState<Job | null>(null);
   const [showReadyDispatch, setShowReadyDispatch] = useState(false);
   const [showProductionSteps, setShowProductionSteps] = useState(false);
-
-  useEffect(() => {
-    if (tabValue !== 'jobs') return;
-    setLoading(true);
-    setError(null);
-    setTimeout(() => {
-      setJobs([
-        {
-          id: '1',
-          company: 'Jockey India',
-          jobId: 'id_234566',
-          boardSize: '64×64',
-          gsm: 'xyz',
-          artwork: 'id_123456',
-          approvalDate: '15/04/2025',
-          dispatchDate: '15/04/2025',
-        },
-        {
-          id: '2',
-          company: 'Jockey India',
-          jobId: 'id_234567',
-          boardSize: '64×64',
-          gsm: 'xyz',
-          artwork: 'id_123457',
-          approvalDate: '16/04/2025',
-          dispatchDate: '16/04/2025',
-        },
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, [tabValue]);
 
   useEffect(() => {
   }, [activeJob]);
@@ -95,6 +88,19 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
             <DispatchOverview />
             <DispatchSummary />
           </>
+        )}
+        {/* Planner role logic */}
+        {role === 'planner' && tabValue === 'dashboard' && (
+          <PlannerDashboard />
+        )}
+        {role === 'planner' && tabValue === 'start new job' && (
+          <StartNewJob />
+        )}
+        {role === 'planner' && tabValue === 'notifications' && (
+          <PlannerNotifications />
+        )}
+        {role === 'planner' && tabValue === 'jobs' && (
+          <PlannerJobs />
         )}
         {/* Printing Manager jobs tab */}
         {role === 'printing_manager' && tabValue === 'jobs' && (
@@ -121,16 +127,9 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
                       />
                     ))
                   ) : (
-                    <JobCard
-                      company="Jockey India"
-                      jobId="id_234566"
-                      boardSize="64×64"
-                      gsm="xyz"
-                      artwork="id_123456"
-                      approvalDate="15/04/2025"
-                      dispatchDate="15/04/2025"
-                      onStop={() => setShowStopScreen(true)}
-                    />
+                    <div className="text-center col-span-full py-8">
+                      <p className="text-gray-500">No jobs found</p>
+                    </div>
                   )}
                 </div>
               </>
@@ -170,16 +169,9 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
                       />
                     ))
                   ) : (
-                    <JobCard
-                      company="Jockey India"
-                      jobId="id_234566"
-                      boardSize="64×64"
-                      gsm="xyz"
-                      artwork="id_123456"
-                      approvalDate="15/04/2025"
-                      dispatchDate="15/04/2025"
-                      onStop={() => setShowProductionSteps(true)}
-                    />
+                    <div className="text-center col-span-full py-8">
+                      <p className="text-gray-500">No jobs found</p>
+                    </div>
                   )}
                 </div>
               </>
