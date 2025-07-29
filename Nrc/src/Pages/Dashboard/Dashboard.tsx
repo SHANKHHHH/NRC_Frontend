@@ -6,17 +6,15 @@ const Summary = lazy(() => import('../../Components/Roles/Admin/Production_Head/
 const ProductionUpdate = lazy(() => import('../../Components/Roles/Admin/Production_Head/ProductionUpdate'));
 const DispatchOverview = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchOverview'));
 const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchSummary'));
-import JobCard from '../../Components/Roles/PrintingMgr/job';
+import JobCard from '../../Components/Roles/PrintingMgr/job'; // Assuming this is correct for PrintingMgr
 import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
-//import DispatchExecutiveDashboard from '../../Components/Dispatch_Executive/dispatch_dashboard';
 import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';
-//import DispatchExecutiveNotifications from '../../Components/Dispatch_Executive/dispatch_notifications';
 import ReadyDispatchForm from '../../Components/Roles/Dispatch_Executive /ReadytoDispatch/readyDispatch';
 import ProductionSteps from '../../Components/Roles/ProductionHead/productionSteps/production_steps';
 import PlannerDashboard from '../../Components/Roles/Planner/Planner_dashboard';
 import StartNewJob from '../../Components/Roles/Planner/startNew_job';
 import PlannerNotifications from '../../Components/Roles/Planner/planner_notifications';
-import PlannerJobs from '../../Components/Roles/Planner/planner_jobs';
+import PlannerJobs from '../../Components/Roles/Planner/planner_jobs'; // Import the new component
 
 interface DashboardProps {
   tabValue: string;
@@ -24,7 +22,7 @@ interface DashboardProps {
   role: string;
 }
 
-interface Job {
+interface Job { // This interface is likely duplicated, ideally it should come from src/types/job.ts
   id: string;
   company: string;
   jobId: string;
@@ -99,8 +97,8 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
         {role === 'planner' && tabValue === 'notifications' && (
           <PlannerNotifications />
         )}
-        {role === 'planner' && tabValue === 'jobs' && (
-          <PlannerJobs />
+        {role === 'planner' && tabValue === 'jobs' && ( // <-- This is the new condition
+          <PlannerJobs /> // <-- Render PlannerJobs component here
         )}
         {/* Printing Manager jobs tab */}
         {role === 'printing_manager' && tabValue === 'jobs' && (

@@ -1,15 +1,15 @@
 // src/Components/Roles/Planner/startNew_job.tsx
 import React, { useEffect, useState } from 'react';
-import { type Job } from './Types/job.ts';
-import JobCard from './jobCard/JobCard';
-import JobDetailModal from './modal/jobDetailModal';
+import { type Job } from './Types/job.ts'; // Adjust path as needed
+import JobCard from './jobCard/JobCard'; // Adjust path as needed
+import JobDetailModal from './modal/jobDetailModal'; // Adjust path as needed
 
 const StartNewJob: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
-  const [updateMessage, setUpdateMessage] = useState<string | null>(null); // For success/error messages after update
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null); // For the read-only detail modal
+  const [message, setMessage] = useState<string | null>(null); // For success/error messages after update
 
   // Function to fetch all jobs
   const fetchJobs = async () => {
@@ -39,7 +39,26 @@ const StartNewJob: React.FC = () => {
 
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
-        setJobs(data.data);
+        // Ensure all jobs have the new fields initialized to null if not present from API
+        const processedJobs: Job[] = data.data.map((j: any) => ({
+          ...j,
+          poNumber: j.poNumber || null,
+          unit: j.unit || null,
+          plant: j.plant || null,
+          totalPOQuantity: j.totalPOQuantity || null,
+          dispatchQuantity: j.dispatchQuantity || null,
+          pendingQuantity: j.pendingQuantity || null,
+          noOfSheets: j.noOfSheets || null,
+          poDate: j.poDate || null,
+          deliveryDate: j.deliveryDate || null,
+          dispatchDate: j.dispatchDate || null,
+          nrcDeliveryDate: j.nrcDeliveryDate || null,
+          jobSteps: j.jobSteps || null,
+          // Ensure jobDemand and machineId are also initialized if they could be null
+          jobDemand: j.jobDemand || null,
+          machineId: j.machineId || null,
+        }));
+        setJobs(processedJobs);
       } else {
         setError('Unexpected API response format or data is not an array.');
       }
@@ -55,9 +74,9 @@ const StartNewJob: React.FC = () => {
     }
   };
 
-  // Function to handle updating job status
+  // Function to handle updating job status (from JobDetailModal - "Continue with this job")
   const handleContinueJob = async (nrcJobNo: string) => {
-    setUpdateMessage(null); // Clear previous update messages
+    setMessage(null); // Clear previous update messages
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) {
@@ -81,7 +100,7 @@ const StartNewJob: React.FC = () => {
 
       const updatedJobData = await response.json();
       if (updatedJobData.success) {
-        setUpdateMessage(`Job ${nrcJobNo} successfully set to ACTIVE!`);
+        setMessage(`Job ${nrcJobNo} successfully set to ACTIVE!`);
         // Update the local state to reflect the change
         setJobs(prevJobs =>
           prevJobs.map(job =>
@@ -89,20 +108,20 @@ const StartNewJob: React.FC = () => {
           )
         );
         // Clear the selected job to close the modal
-        setSelectedJob(null);
+        setSelectedJob(null); // Close the detail modal
       } else {
-        setUpdateMessage(updatedJobData.message || `Failed to update job ${nrcJobNo}.`);
+        setMessage(updatedJobData.message || `Failed to update job ${nrcJobNo}.`);
       }
     } catch (err) {
       if (err instanceof Error) {
-        setUpdateMessage(`Error updating job: ${err.message}`);
+        setMessage(`Error updating job: ${err.message}`);
       } else {
-        setUpdateMessage('An unknown error occurred during job update.');
+        setMessage('An unknown error occurred during job update.');
       }
       console.error('Update Job Error:', err);
     } finally {
       // Message will disappear after 3 seconds
-      setTimeout(() => setUpdateMessage(null), 3000);
+      setTimeout(() => setMessage(null), 3000);
     }
   };
 
@@ -120,7 +139,7 @@ const StartNewJob: React.FC = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8  min-h-screen">
-     
+      <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Manage Jobs</h1>
 
       {loading && (
         <div className="flex justify-center items-center h-64">
@@ -136,9 +155,9 @@ const StartNewJob: React.FC = () => {
         </div>
       )}
 
-      {updateMessage && (
-        <div className={`px-4 py-3 rounded relative mb-6 ${updateMessage.includes('Error') ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'}`} role="alert">
-          <span className="block sm:inline">{updateMessage}</span>
+      {message && (
+        <div className={`px-4 py-3 rounded relative mb-6 ${message.includes('Error') ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'}`} role="alert">
+          <span className="block sm:inline">{message}</span>
         </div>
       )}
 
@@ -152,7 +171,12 @@ const StartNewJob: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {activeJobs.map(job => (
-                  <JobCard key={job.id} job={job} onClick={setSelectedJob} />
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    onClick={setSelectedJob} // Original onClick to open full details
+                    // Removed onInitiateJobClick and jobCompletionStatus props
+                  />
                 ))}
               </div>
             )}
@@ -166,7 +190,12 @@ const StartNewJob: React.FC = () => {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {inactiveJobs.map(job => (
-                  <JobCard key={job.id} job={job} onClick={setSelectedJob} />
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    onClick={setSelectedJob} // Original onClick to open full details
+                    // Removed onInitiateJobClick and jobCompletionStatus props
+                  />
                 ))}
               </div>
             )}
@@ -178,7 +207,7 @@ const StartNewJob: React.FC = () => {
         <JobDetailModal
           job={selectedJob}
           onClose={() => setSelectedJob(null)}
-          onContinueJob={handleContinueJob} // THIS LINE IS CRUCIAL FOR THE FIX
+          onContinueJob={handleContinueJob}
         />
       )}
     </div>
