@@ -1,7 +1,7 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Logo from "../assets/Login/logo.jpg";
+import Logo from "../assets/Login/logo.jpg"; // Assuming this is the correct path to your logo
 
 /**
  * Type for form data used in login
@@ -25,12 +25,12 @@ interface LoginProps {
  */
 export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
   const navigate = useNavigate();
-  
+
   // ---------------------- State Declarations ---------------------- //
   const [formData, setFormData] = useState<LoginFormData>({
     id: "",
     password: "",
-    role: "printing_manager", // default for testing
+    role: "planner", // Changed default to 'planner' for easier testing of the new feature
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -72,23 +72,24 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
       // If login successful
       if (response.data.success) {
         setSubmitStatus("success");
-        
+
         // Store the access token in localStorage
-        localStorage.setItem("accessToken", response.data.acessToken);
-        
+        // IMPORTANT: Using 'acessToken' as per your backend response.
+        localStorage.setItem("accessToken", response.data.acessToken); // Changed to acessToken
+
         // Store user data in localStorage for persistence
         localStorage.setItem("userData", JSON.stringify(response.data.data));
-        
+
         // Get user data from response
         const userData = response.data.data;
-        
+
         // Set authentication state and user role
         setIsAuthenticated(true);
         setUserRole(userData.role);
-        
+
         // Clear form
-        setFormData({ id: "", password: "", role: "printing_manager" });
-        
+        setFormData({ id: "", password: "", role: "planner" }); // Reset role to planner for consistency
+
         // Navigate to dashboard
         navigate('/dashboard');
       } else {
@@ -187,7 +188,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
               {isSubmitting ? "Logging in..." : "Login"}
             </button>
 
-            {/* Temporary Login Button for Testing */}
+            {/* Temporary Login Button for Testing - IMPORTANT: Uses your provided valid token */}
             <button
               type="button"
               onClick={() => {
@@ -197,11 +198,12 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
                   userActive: true,
                   role: formData.role
                 };
-                
-                // Store test data in localStorage
-                localStorage.setItem("accessToken", "test-token-for-development");
+
+                // Store test data in localStorage with the correct key 'accessToken'
+                // Using the new access token you provided
+                localStorage.setItem("accessToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ik5SQzAwMSIsImlhdCI6MTc1Mzc2NjY5MSwiZXhwIjoxNzU2MzU4NjkxfQ.b1Zx7WouiL9EALehVM8xLs2RO55u9FqfvKo1n0Jg6cY");
                 localStorage.setItem("userData", JSON.stringify(testUserData));
-                
+
                 setIsAuthenticated(true);
                 setUserRole(formData.role);
                 navigate('/dashboard');

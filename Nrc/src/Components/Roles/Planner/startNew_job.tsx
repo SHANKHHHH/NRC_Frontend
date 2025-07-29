@@ -1,4 +1,188 @@
-function StartNewJob() {
-  return <div style={{padding: '2rem', textAlign: 'center'}}>Start New Job (Planner)</div>;
-}
+// src/Components/Roles/Planner/startNew_job.tsx
+import React, { useEffect, useState } from 'react';
+import { type Job } from './Types/job.ts';
+import JobCard from './jobCard/JobCard';
+import JobDetailModal from './modal/jobDetailModal';
+
+const StartNewJob: React.FC = () => {
+  const [jobs, setJobs] = useState<Job[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
+  const [updateMessage, setUpdateMessage] = useState<string | null>(null); // For success/error messages after update
+
+  // Function to fetch all jobs
+  const fetchJobs = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+
+      if (!accessToken) {
+        setError('Authentication token not found. Please log in.');
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('https://nrc-backend-his4.onrender.com/api/jobs', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to fetch jobs: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        setJobs(data.data);
+      } else {
+        setError('Unexpected API response format or data is not an array.');
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError('An unknown error occurred.');
+      }
+      console.error('Fetch Jobs Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Function to handle updating job status
+  const handleContinueJob = async (nrcJobNo: string) => {
+    setUpdateMessage(null); // Clear previous update messages
+    try {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in.');
+      }
+
+      const API_ENDPOINT = `https://nrc-backend-his4.onrender.com/api/jobs/${nrcJobNo}`;
+      const response = await fetch(API_ENDPOINT, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ status: 'ACTIVE' }), // Send the updated status
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to update job status: ${response.status} ${response.statusText}`);
+      }
+
+      const updatedJobData = await response.json();
+      if (updatedJobData.success) {
+        setUpdateMessage(`Job ${nrcJobNo} successfully set to ACTIVE!`);
+        // Update the local state to reflect the change
+        setJobs(prevJobs =>
+          prevJobs.map(job =>
+            job.nrcJobNo === nrcJobNo ? { ...job, status: 'ACTIVE' } : job
+          )
+        );
+        // Clear the selected job to close the modal
+        setSelectedJob(null);
+      } else {
+        setUpdateMessage(updatedJobData.message || `Failed to update job ${nrcJobNo}.`);
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setUpdateMessage(`Error updating job: ${err.message}`);
+      } else {
+        setUpdateMessage('An unknown error occurred during job update.');
+      }
+      console.error('Update Job Error:', err);
+    } finally {
+      // Message will disappear after 3 seconds
+      setTimeout(() => setUpdateMessage(null), 3000);
+    }
+  };
+
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchJobs();
+    }, 50); // Small delay to ensure localStorage is ready
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const activeJobs = jobs.filter(job => job.status === 'ACTIVE');
+  const inactiveJobs = jobs.filter(job => job.status === 'INACTIVE');
+
+  return (
+    <div className="p-4 sm:p-6 lg:p-8  min-h-screen">
+     
+
+      {loading && (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+          <p className="ml-4 text-lg text-gray-600">Loading jobs...</p>
+        </div>
+      )}
+
+      {error && (
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">
+          <strong className="font-bold">Error!</strong>
+          <span className="block sm:inline"> {error}</span>
+        </div>
+      )}
+
+      {updateMessage && (
+        <div className={`px-4 py-3 rounded relative mb-6 ${updateMessage.includes('Error') ? 'bg-red-100 border border-red-400 text-red-700' : 'bg-green-100 border border-green-400 text-green-700'}`} role="alert">
+          <span className="block sm:inline">{updateMessage}</span>
+        </div>
+      )}
+
+      {!loading && !error && (
+        <>
+          {/* Active Jobs Section */}
+          <section className="mb-10">
+            <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Active Jobs ({activeJobs.length})</h2>
+            {activeJobs.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No active jobs found.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {activeJobs.map(job => (
+                  <JobCard key={job.id} job={job} onClick={setSelectedJob} />
+                ))}
+              </div>
+            )}
+          </section>
+
+          {/* Inactive Jobs Section */}
+          <section>
+            <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Inactive Jobs ({inactiveJobs.length})</h2>
+            {inactiveJobs.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">No inactive jobs found.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                {inactiveJobs.map(job => (
+                  <JobCard key={job.id} job={job} onClick={setSelectedJob} />
+                ))}
+              </div>
+            )}
+          </section>
+        </>
+      )}
+
+      {selectedJob && (
+        <JobDetailModal
+          job={selectedJob}
+          onClose={() => setSelectedJob(null)}
+          onContinueJob={handleContinueJob} // THIS LINE IS CRUCIAL FOR THE FIX
+        />
+      )}
+    </div>
+  );
+};
+
 export default StartNewJob;

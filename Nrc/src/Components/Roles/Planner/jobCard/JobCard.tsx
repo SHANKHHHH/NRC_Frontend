@@ -1,0 +1,55 @@
+// src/Components/Roles/Planner/JobCard.tsx
+import React from 'react';
+import {type Job } from '../Types/job.ts'
+
+interface JobCardProps {
+  job: Job;
+  onClick: (job: Job) => void;
+}
+
+const JobCard: React.FC<JobCardProps> = ({ job, onClick }) => {
+  const statusColor = job.status === 'ACTIVE' ? 'bg-green-500' : 'bg-red-500';
+
+  return (
+    <div
+      className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-lg transition-shadow duration-300 flex flex-col justify-between h-full"
+      onClick={() => onClick(job)}
+    >
+      <div className="flex justify-between items-start mb-2">
+        <div className="flex flex-col">
+          <p className="text-sm text-gray-500">Customer Name</p>
+          <h3 className="text-lg font-semibold text-gray-800">{job.customerName}</h3>
+        </div>
+        <span className={`px-3 py-1 text-xs font-semibold text-white rounded-full ${statusColor}`}>
+          {job.status}
+        </span>
+      </div>
+
+      <div className="flex flex-col mb-2">
+        <p className="text-sm text-gray-500">Style Item SKU</p>
+        <p className="text-base text-gray-700">{job.styleItemSKU}</p>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2 text-sm text-gray-700">
+        <div>
+          <p className="text-gray-500">NRC Job No:</p>
+          <p className="font-medium">{job.nrcJobNo}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Flute Type:</p>
+          <p className="font-medium">{job.fluteType || 'N/A'}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Box Dimensions:</p>
+          <p className="font-medium">{job.boxDimensions}</p>
+        </div>
+        <div>
+          <p className="text-gray-500">Pre Rate:</p>
+          <p className="font-medium">{job.preRate !== null ? job.preRate : 'N/A'}</p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default JobCard;
