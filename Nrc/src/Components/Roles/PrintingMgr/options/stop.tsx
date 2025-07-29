@@ -34,9 +34,9 @@ const StopScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
   };
 
   return (
-    <div className="flex w-full min-h-[70vh]">
-      {/* Sidebar */}
-      <aside className="w-64 min-w-[220px] bg-transparent p-4 flex flex-col gap-4">
+    <div className="flex flex-col md:flex-row w-full min-h-[70vh]">
+      {/* Sidebar/Table */}
+      <aside className="w-full md:w-64 min-w-[220px] bg-transparent p-4 flex flex-col gap-4 md:sticky md:top-0 md:h-auto overflow-x-auto md:overflow-x-visible">
         {sidebarSections.map(section => (
           <div key={section.title}>
             <div className="bg-blue-100 rounded px-3 py-1 font-semibold text-sm mb-1">{section.title}</div>
@@ -58,7 +58,7 @@ const StopScreen: React.FC<{ onBack?: () => void }> = ({ onBack }) => {
         ))}
       </aside>
       {/* Main Card */}
-      <main className="flex-1 flex items-center justify-center">
+      <main className="flex-1 flex items-center justify-center p-2 md:p-0">
         <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-xl flex flex-col items-center">
           <h2 className="text-lg font-semibold text-center mb-6">Printing Details</h2>
           <form className="w-full flex flex-col gap-6 items-center" onSubmit={e => { e.preventDefault(); handleComplete(); }}>

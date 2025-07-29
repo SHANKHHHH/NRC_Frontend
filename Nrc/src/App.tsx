@@ -1,7 +1,7 @@
 import { Suspense, lazy, useState } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import './App.css';
-import Header from './Components/dashboard/Header/Header';
+import Header from './Components/Navbar/Header/Header';
 import Login from './Pages/Login';
 import ProtectedRoute from './Routes/ProtectedRoute';
 
@@ -18,7 +18,7 @@ function App() {
     <BrowserRouter>
       <Suspense fallback={<div>Loading...</div>}>
         <Routes>
-          <Route 
+          <Route
             path="/login" 
             element={
               isAuthenticated ? 
@@ -31,7 +31,7 @@ function App() {
             element={
               <ProtectedRoute isAuthenticated={isAuthenticated}>
                 <Header tabValue={tabValue} setTabValue={setTabValue} onLogout={handleLogout} role={userRole || 'admin'} />
-                <Dashboard tabValue={tabValue} setTabValue={setTabValue} />
+                <Dashboard tabValue={tabValue} setTabValue={setTabValue} role={userRole || 'admin'} />
               </ProtectedRoute>
             } 
           />

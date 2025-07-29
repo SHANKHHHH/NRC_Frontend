@@ -5,7 +5,7 @@ import settingsIcon from '../../assets/Icons/settings.svg';
 interface UserSidebarProps {
   open: boolean;
   onClose: () => void;
-  role: string; // <-- add this
+  role: string;
   onLogout: () => void;
   onOptionSelect?: (option: string) => void;
   onManageAccessRoleSelect?: (role: string) => void;
@@ -30,7 +30,18 @@ const sidebarConfig: Record<string, { displayName: string; options: string[] }> 
     displayName: 'Printing Manager',
     options: ['Dashboard', 'Jobs', 'Notifications'],
   },
-  // Add more roles as needed
+  dispatch_executive: {
+    displayName: 'Dispatch Executive',
+    options: ['Dashboard', 'Jobs', 'Notifications'],
+  },
+  production_head: {
+    displayName: 'Production Head',
+    options: ['Dashboard', 'Jobs', 'Notifications'],
+  },
+  planner: {
+    displayName: 'Planner',
+    options: ['Dashboard', 'Start New Job', 'Notifications', 'Jobs'],
+  },
 };
 
 const accessRoles = [
@@ -42,7 +53,14 @@ const accessRoles = [
   'QC Manager',
 ];
 
-const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, role = 'admin', onLogout, onOptionSelect, onManageAccessRoleSelect }) => {
+const UserSidebar: React.FC<UserSidebarProps> = ({
+  open,
+  onClose,
+  role = 'admin',
+  onLogout,
+  onOptionSelect,
+  onManageAccessRoleSelect,
+}) => {
   const [manageAccessMode, setManageAccessMode] = useState(false);
   const config = sidebarConfig[role] || sidebarConfig['admin'];
 
@@ -55,21 +73,19 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, role = 'admin'
       />
       {/* Sidebar */}
       <aside
-        className={
-          `fixed top-0 right-0 h-full
+        className={`fixed top-0 right-0 h-full
           w-4/5 sm:w-80 md:w-96 lg:w-[22rem] xl:w-[24rem] 2xl:w-[26rem] max-w-full
           bg-white z-50 shadow-2xl
           transform transition-transform duration-300
           ${open ? 'translate-x-0' : 'translate-x-full'}
-          flex flex-col`
-        }
+          flex flex-col`}
       >
         <div className="flex-1 overflow-y-auto flex flex-col items-center py-8">
           <div className="bg-blue-100 rounded-full p-6 mb-2">
             <img src={manageAccessMode ? settingsIcon : userIcon} alt="User" className="h-16 w-16" />
           </div>
           <div className="text-xl font-semibold mb-6">
-            {manageAccessMode ? "Manage Access" : config.displayName}
+            {manageAccessMode ? 'Manage Access' : config.displayName}
           </div>
           <div className="w-full flex flex-col gap-0">
             {manageAccessMode ? (
@@ -95,12 +111,12 @@ const UserSidebar: React.FC<UserSidebarProps> = ({ open, onClose, role = 'admin'
                     <button
                       className="w-full text-left px-6 py-3 text-base font-medium hover:bg-blue-50 focus:outline-none hover:cursor-pointer"
                       onClick={() => {
-                        if (option === "Manage Access") {
+                        if (option === 'Manage Access') {
                           setManageAccessMode(true);
                           return;
                         }
                         if (onOptionSelect) onOptionSelect(option);
-                        if (option !== "Create new ID") {
+                        if (option !== 'Create new ID') {
                           onClose();
                         }
                       }}

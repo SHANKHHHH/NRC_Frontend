@@ -1,15 +1,15 @@
 import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Logo from "../assets/Login/logo.jpg";
+import Logo from "../assets/Login/logo.jpg"; // Assuming this is the correct path to your logo
 
 /**
  * Type for form data used in login
  */
 interface LoginFormData {
-  phone: string;
+  id: string;
   password: string;
-  role: string; // <-- Add role to form data
+  role: string; // For UI display only
 }
 
 /**
@@ -25,12 +25,12 @@ interface LoginProps {
  */
 export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
   const navigate = useNavigate();
-  
+
   // ---------------------- State Declarations ---------------------- //
   const [formData, setFormData] = useState<LoginFormData>({
-    phone: "",
+    id: "",
     password: "",
-    role: "printing_manager", // default for testing
+    role: "planner", // Changed default to 'planner' for easier testing of the new feature
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,49 +55,53 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
     e.preventDefault();
     setIsSubmitting(true);
 
-    const { phone, password } = formData;
+    const { id, password } = formData;
 
     try {
       // Simple frontend validation
-      if (!phone.trim() || !password.trim()) {
+      if (!id.trim() || !password.trim()) {
         throw new Error("All fields are required.");
       }
 
-      // API endpoint (secured via environment variable)
-      const API_ENDPOINT = `${import.meta.env.VITE_API_URL}/auth/login`;
+      // API endpoint
+      const API_ENDPOINT = "https://nrc-backend-his4.onrender.com/api/auth/login";
 
-      // Make POST request to backend
-      const response = await axios.post(API_ENDPOINT, { phone, password });
+      // Make POST request to backend with the expected payload format
+      const response = await axios.post(API_ENDPOINT, { id, password });
 
       // If login successful
-      if (response.status === 200) {
+      if (response.data.success) {
         setSubmitStatus("success");
-        setFormData({ phone: "", password: "", role: "printing_manager" }); // Clear form
-        
-        // Check if user is admin (you can modify this logic based on your API response)
-        const userData = response.data;
-        if (userData.role === 'admin' || userData.isAdmin) {
-          // Set authentication state and redirect to dashboard
-          setIsAuthenticated(true);
-          setUserRole(userData.role); // <-- Use the role from your API/user data
-          navigate('/dashboard');
-        } else {
-          // For non-admin users, you can handle differently
-          setSubmitStatus("error");
-          setTimeout(() => setSubmitStatus(null), 3000);
-        }
+
+        // Store the access token in localStorage
+        // IMPORTANT: Using 'acessToken' as per your backend response.
+        localStorage.setItem("accessToken", response.data.acessToken); // Changed to acessToken
+
+        // Store user data in localStorage for persistence
+        localStorage.setItem("userData", JSON.stringify(response.data.data));
+
+        // Get user data from response
+        const userData = response.data.data;
+
+        // Set authentication state and user role
+        setIsAuthenticated(true);
+        setUserRole(userData.role);
+
+        // Clear form
+        setFormData({ id: "", password: "", role: "planner" }); // Reset role to planner for consistency
+
+        // Navigate to dashboard
+        navigate('/dashboard');
       } else {
         setSubmitStatus("error");
+        setTimeout(() => setSubmitStatus(null), 3000);
       }
     } catch (error) {
       console.error("Login Error:", error);
       setSubmitStatus("error");
+      setTimeout(() => setSubmitStatus(null), 3000);
     } finally {
       setIsSubmitting(false);
-      // Reset status message after 3s (only if not redirecting)
-      if (submitStatus !== "success") {
-        setTimeout(() => setSubmitStatus(null), 3000);
-      }
     }
   };
 
@@ -116,13 +120,13 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
           <form onSubmit={handleSubmit} className="space-y-6">
             <h2 className="text-2xl font-bold text-center text-[#00AEEF]">Login</h2>
 
-            {/* Phone Input */}
+            {/* ID Input */}
             <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
+              type="text"
+              name="id"
+              value={formData.id}
               onChange={handleChange}
-              placeholder="Phone Number"
+              placeholder="Employee ID"
               className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
               required
             />
@@ -138,7 +142,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
               required
             />
 
-            {/* Role Selection Dropdown */}
+            {/* Role Selection Dropdown (for UI only) */}
             <select
               name="role"
               value={formData.role}
@@ -147,6 +151,9 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
             >
               <option value="admin">Admin</option>
               <option value="printing_manager">Printing Manager</option>
+              <option value="dispatch_executive">Dispatch Executive</option>
+              <option value="production_head">Production Head</option>
+              <option value="planner">Planner</option>
               {/* Add more roles as needed */}
             </select>
 
@@ -181,17 +188,33 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
               {isSubmitting ? "Logging in..." : "Login"}
             </button>
 
-            {/* Temporary Login Button for Testing */}
+            {/* Temporary Login Button for Testing - IMPORTANT: Uses your provided valid token */}
             <button
               type="button"
               onClick={() => {
+                // Simulate successful login with test data
+                const testUserData = {
+                  id: formData.role === "admin" ? "NRC001" : "NRC002",
+                  userActive: true,
+                  role: formData.role
+                };
+
+                // Store test data in localStorage with the correct key 'accessToken'
+                // Using the new access token you provided
+                localStorage.setItem("accessToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ik5SQzAwMSIsImlhdCI6MTc1Mzc2NjY5MSwiZXhwIjoxNzU2MzU4NjkxfQ.b1Zx7WouiL9EALehVM8xLs2RO55u9FqfvKo1n0Jg6cY");
+                localStorage.setItem("userData", JSON.stringify(testUserData));
+
                 setIsAuthenticated(true);
-                setUserRole(formData.role); // Use the selected role from the dropdown
+                setUserRole(formData.role);
                 navigate('/dashboard');
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 hover:cursor-pointer"
             >
-              Test Login as {formData.role === 'admin' ? 'Admin' : 'Printing Manager'}
+              Test Login as {formData.role
+                .split('_')
+                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                .join(' ')
+              }
             </button>
 
             {/* Status Messages */}
