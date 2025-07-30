@@ -1,17 +1,18 @@
 // src/Components/Roles/Planner/planner_jobs.tsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { type Job } from './Types/job.ts'; // Adjust path as needed
 import JobCard from './jobCard/JobCard'; // Adjust path as needed
 import JobDetailModal from './modal/jobDetailModal'; // Adjust path as needed
-import JobInitiationForm from './Form/JobInitiationForm.tsx'; // Import the new multi-step form
+// JobInitiationForm is now rendered via a route, so no direct import needed here for rendering.
 
 const PlannerJobs: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedJobForDetail, setSelectedJobForDetail] = useState<Job | null>(null); // For the read-only detail modal
-  const [selectedJobForInitiation, setSelectedJobForInitiation] = useState<Job | null>(null); // For the multi-step form
   const [message, setMessage] = useState<string | null>(null); // For success/error messages after any update
+  const navigate = useNavigate(); // Initialize navigate
 
   // Helper function to check job completion status
   const checkJobCompletionStatus = (job: Job): 'artwork_pending' | 'po_pending' | 'more_info_pending' | 'completed' => {
@@ -21,8 +22,6 @@ const PlannerJobs: React.FC = () => {
     }
 
     // 2. Check P.O. Details
-    // Using poNumber as the primary indicator for PO completion on the Job object,
-    // along with other key PO fields that should be populated after PO creation.
     if (!job.poNumber || !job.unit || !job.plant ||
         job.totalPOQuantity === null || job.dispatchQuantity === null ||
         job.pendingQuantity === null || job.noOfSheets === null ||
@@ -31,7 +30,6 @@ const PlannerJobs: React.FC = () => {
     }
 
     // 3. Check More Information
-    // Check if jobDemand and machineId are filled, and if jobSteps array exists and is not empty
     if (!job.jobDemand || !job.machineId || !job.jobSteps || job.jobSteps.length === 0) {
       return 'more_info_pending';
     }
@@ -67,7 +65,6 @@ const PlannerJobs: React.FC = () => {
 
       const data = await response.json();
       if (data.success && Array.isArray(data.data)) {
-        // Ensure all jobs have the new fields initialized to null if not present from API
         const processedJobs: Job[] = data.data.map((j: any) => ({
           ...j,
           poNumber: j.poNumber || null,
@@ -82,7 +79,6 @@ const PlannerJobs: React.FC = () => {
           dispatchDate: j.dispatchDate || null,
           nrcDeliveryDate: j.nrcDeliveryDate || null,
           jobSteps: j.jobSteps || null,
-          // Ensure jobDemand and machineId are also initialized if they could be null
           jobDemand: j.jobDemand || null,
           machineId: j.machineId || null,
         }));
@@ -102,12 +98,12 @@ const PlannerJobs: React.FC = () => {
     }
   };
 
-  // Callback for when a job is updated through the JobInitiationForm
+  // Callback for when a job is updated through the JobInitiationForm (now comes from route)
   const handleJobUpdated = (updatedJob: Job) => {
     setJobs(prevJobs =>
       prevJobs.map(job => (job.id === updatedJob.id ? updatedJob : job))
     );
-    setSelectedJobForInitiation(null); // Close the initiation form modal
+    // No need to close modal here, as JobInitiationForm handles its own navigation back.
     setMessage(`Job ${updatedJob.nrcJobNo} updated successfully!`);
     setTimeout(() => setMessage(null), 3000);
   };
@@ -139,13 +135,11 @@ const PlannerJobs: React.FC = () => {
       const updatedJobData = await response.json();
       if (updatedJobData.success) {
         setMessage(`Job ${nrcJobNo} successfully set to ACTIVE!`);
-        // Update the local state to reflect the change
         setJobs(prevJobs =>
           prevJobs.map(job =>
             job.nrcJobNo === nrcJobNo ? { ...job, status: 'ACTIVE' } : job
           )
         );
-        // Clear the selected job to close the modal
         setSelectedJobForDetail(null); // Close the detail modal
       } else {
         setMessage(updatedJobData.message || `Failed to update job ${nrcJobNo}.`);
@@ -158,25 +152,28 @@ const PlannerJobs: React.FC = () => {
       }
       console.error('Update Job Error:', err);
     } finally {
-      // Message will disappear after 3 seconds
       setTimeout(() => setMessage(null), 3000);
     }
+  };
+
+  // New handler for clicking the "Fill details to start the job" button
+  const handleInitiateJobClick = (job: Job) => {
+    navigate(`/dashboard/planner/initiate-job/${job.nrcJobNo}`);
   };
 
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchJobs();
-    }, 50); // Small delay to ensure localStorage is ready
+    }, 50);
 
     return () => clearTimeout(timer);
   }, []);
 
-  // Filter for ONLY active jobs for this tab
   const activeJobs = jobs.filter(job => job.status === 'ACTIVE');
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 min-h-screen">
+    <div className="p-4 sm:p-6 lg:p-8  min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Active Jobs</h1>
 
       {loading && (
@@ -209,9 +206,9 @@ const PlannerJobs: React.FC = () => {
                 <JobCard
                   key={job.id}
                   job={job}
-                  onClick={setSelectedJobForDetail} // Click on card opens detail modal
-                  onInitiateJobClick={setSelectedJobForInitiation} // Pass the handler for the button
-                  jobCompletionStatus={checkJobCompletionStatus(job)} // Pass the status for the button
+                  onClick={setSelectedJobForDetail}
+                  onInitiateJobClick={handleInitiateJobClick} // Use the new navigation handler
+                  jobCompletionStatus={checkJobCompletionStatus(job)}
                 />
               ))}
             </div>
@@ -224,18 +221,11 @@ const PlannerJobs: React.FC = () => {
         <JobDetailModal
           job={selectedJobForDetail}
           onClose={() => setSelectedJobForDetail(null)}
-          onContinueJob={handleContinueJob} // Still pass this for inactive jobs in detail modal
+          onContinueJob={handleContinueJob}
         />
       )}
 
-      {/* Job Initiation Form (multi-step wizard) */}
-      {selectedJobForInitiation && (
-        <JobInitiationForm
-          job={selectedJobForInitiation}
-          onClose={() => setSelectedJobForInitiation(null)}
-          onJobUpdated={handleJobUpdated}
-        />
-      )}
+      {/* Job Initiation Form is now rendered via a route, not directly here */}
     </div>
   );
 };
