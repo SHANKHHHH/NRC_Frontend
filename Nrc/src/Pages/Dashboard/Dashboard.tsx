@@ -21,6 +21,7 @@ import StartNewJob from '../../Components/Roles/Planner/startNew_job';
 import PlannerNotifications from '../../Components/Roles/Planner/planner_notifications';
 import PlannerJobs from '../../Components/Roles/Planner/planner_jobs';
 import JobInitiationForm from '../../Components/Roles/Planner/Form/JobInitiationForm.tsx'; // Import the JobInitiationForm
+import JobAssigned from '../../Components/Roles/Planner/job_assigned.tsx';
 
 interface DashboardProps {
   tabValue: string;
@@ -73,6 +74,9 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
           // For a full-page component, it's better to manage it directly in App.tsx.
           // I will proceed assuming App.tsx will handle the direct route.
           null // This will be removed or changed based on App.tsx's final routing.
+        )}
+        {role === 'planner' && tabValue === 'job assigned' && ( // ADDED: New condition for Job Assigned
+          <JobAssigned />
         )}
 
 

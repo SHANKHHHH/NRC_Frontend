@@ -40,7 +40,7 @@ const sidebarConfig: Record<string, { displayName: string; options: string[] }> 
   },
   planner: {
     displayName: 'Planner',
-    options: ['Dashboard', 'Start New Job', 'Notifications', 'Jobs'],
+    options: ['Dashboard', 'Start New Job', 'Notifications', 'Jobs', 'Job Assigned'], // ADDED: New option for Planner
   },
 };
 

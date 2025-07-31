@@ -81,7 +81,7 @@ export interface Job {
   shadeCardApprovalDate: string | null; // Date string (ISO or YYYY-MM-DD)
   srNo: number | null; // Used for PO linkage (PO Number ID)
   jobDemand: 'high' | 'medium' | 'low' | null;
-  imageURL: string | null; // ADDED: For artwork image URL (or Base64 string)
+  imageURL: string | null; // For artwork image URL (or Base64 string)
   createdAt: string;
   updatedAt: string;
   userId: string | null;
@@ -102,4 +102,27 @@ export interface Job {
 
   // Field for Job Planning Steps
   jobSteps: JobStep[] | null; // Array of steps for job planning
+}
+
+// NEW INTERFACES FOR JOB PLANNING DATA
+export interface JobPlanStep {
+  id: number;
+  stepNo: number;
+  stepName: string;
+  machineDetails: any[]; // Assuming this can be an array, or could be string if it's machineDetail
+  status: string; // e.g., "stop", "start", "planned"
+  startDate: string | null;
+  endDate: string | null;
+  user: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobPlan {
+  jobPlanId: number;
+  nrcJobNo: string;
+  jobDemand: 'high' | 'medium' | 'low' | null;
+  createdAt: string;
+  updatedAt: string;
+  steps: JobPlanStep[];
 }
