@@ -1,12 +1,15 @@
 // Nrc/src/Pages/Dashboard/Dashboard.tsx
 import React, { lazy, Suspense, useEffect, useState } from 'react';
+// Import the Job interface from the centralized types file
+import { type Job } from '../../Components/Roles/Planner/Types/job.ts'; // Corrected path to the Job interface
+
 const OrderSummary = lazy(() => import('../../Components/Roles/Admin/Planner/OrderSummary'));
 const ProductionSchedule = lazy(() => import('../../Components/Roles/Admin/Planner/ProductionSchedule'));
 const Summary = lazy(() => import('../../Components/Roles/Admin/Production_Head/Summary'));
 const ProductionUpdate = lazy(() => import('../../Components/Roles/Admin/Production_Head/ProductionUpdate'));
 const DispatchOverview = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchOverview'));
 const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchSummary'));
-import JobCard from '../../Components/Roles/PrintingMgr/job'; // Assuming this is correct for PrintingMgr
+import PrintingMgrJobCard from '../../Components/Roles/PrintingMgr/job'; // Renamed import to avoid conflict
 import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
 import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';
 import ReadyDispatchForm from '../../Components/Roles/Dispatch_Executive /ReadytoDispatch/readyDispatch';
@@ -14,7 +17,8 @@ import ProductionSteps from '../../Components/Roles/ProductionHead/productionSte
 import PlannerDashboard from '../../Components/Roles/Planner/Planner_dashboard';
 import StartNewJob from '../../Components/Roles/Planner/startNew_job';
 import PlannerNotifications from '../../Components/Roles/Planner/planner_notifications';
-import PlannerJobs from '../../Components/Roles/Planner/planner_jobs'; // Import the new component
+import PlannerJobs from '../../Components/Roles/Planner/planner_jobs';
+import JobAssigned from '../../Components/Roles/Planner/job_assigned'; // IMPORTED: New component
 
 interface DashboardProps {
   tabValue: string;
@@ -22,7 +26,10 @@ interface DashboardProps {
   role: string;
 }
 
-interface Job { // This interface is likely duplicated, ideally it should come from src/types/job.ts
+// Re-added dummy job data for Printing Manager and Production Head sections,
+// as they were previously using it. This is a temporary measure if these components
+// don't yet fetch their own data. Ideally, these components should be self-sufficient.
+interface DummyJob { // Re-defined a local dummy interface for these sections
   id: string;
   company: string;
   jobId: string;
@@ -33,8 +40,11 @@ interface Job { // This interface is likely duplicated, ideally it should come f
   dispatchDate: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) => {
-  const [jobs, setJobs] = useState<Job[]>([
+const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
+  // Re-added state for jobs, loading, error, etc., specifically for the
+  // Printing Manager and Production Head sections that were using them.
+  // This is to restore their original functionality as per your request.
+  const [jobs, setJobs] = useState<DummyJob[]>([
     {
       id: '1',
       company: 'Jockey India',
@@ -56,38 +66,42 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
       dispatchDate: '16/04/2025',
     },
   ]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [showStopScreen, setShowStopScreen] = useState(false);
-  const [activeJob, setActiveJob] = useState<Job | null>(null);
-  const [showReadyDispatch, setShowReadyDispatch] = useState(false);
-  const [showProductionSteps, setShowProductionSteps] = useState(false);
+  const [loading, setLoading] = useState(false); // Re-added
+  const [error, setError] = useState<string | null>(null); // Re-added
+  const [showStopScreen, setShowStopScreen] = useState(false); // Re-added
+  const [activeJob, setActiveJob] = useState<DummyJob | null>(null); // Re-added
+  const [showReadyDispatch, setShowReadyDispatch] = useState(false); // Re-added
+  const [showProductionSteps, setShowProductionSteps] = useState(false); // Re-added
 
+  // Re-added useEffect if it was previously used with activeJob
   useEffect(() => {
   }, [activeJob]);
+
 
   return (
     <div className="px-4 sm:px-8 py-8 bg-[#f7f7f7] min-h-screen">
       <Suspense fallback={<div>Loading...</div>}>
-        {tabValue === 'planner' && (
+        {/* Admin Role Tabs */}
+        {role === 'admin' && tabValue === 'planner' && (
           <>
             <OrderSummary />
             <ProductionSchedule />
           </>
         )}
-        {tabValue === 'production' && (
+        {role === 'admin' && tabValue === 'production' && (
           <>
             <Summary />
             <ProductionUpdate />
           </>
         )}
-        {tabValue === 'dispatch' && (
+        {role === 'admin' && tabValue === 'dispatch' && (
           <>
             <DispatchOverview />
             <DispatchSummary />
           </>
         )}
-        {/* Planner role logic */}
+
+        {/* Planner role specific components */}
         {role === 'planner' && tabValue === 'dashboard' && (
           <PlannerDashboard />
         )}
@@ -97,10 +111,15 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
         {role === 'planner' && tabValue === 'notifications' && (
           <PlannerNotifications />
         )}
-        {role === 'planner' && tabValue === 'jobs' && ( // <-- This is the new condition
-          <PlannerJobs /> // <-- Render PlannerJobs component here
+        {role === 'planner' && tabValue === 'jobs' && (
+          <PlannerJobs />
         )}
-        {/* Printing Manager jobs tab */}
+        {role === 'planner' && tabValue === 'job assigned' && (
+          <JobAssigned />
+        )}
+
+
+        {/* Printing Manager jobs tab - RESTORED ORIGINAL CONTENT */}
         {role === 'printing_manager' && tabValue === 'jobs' && (
           <div className="w-full flex flex-col items-center">
             {showStopScreen ? (
@@ -112,7 +131,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
                 <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4 justify-items-center">
                   {jobs.length > 0 ? (
                     jobs.map(job => (
-                      <JobCard
+                      <PrintingMgrJobCard // Using the renamed import
                         key={job.id}
                         company={job.company}
                         jobId={job.jobId}
@@ -134,7 +153,8 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
             )}
           </div>
         )}
-        {/* Dispatch Executive jobs tab */}
+
+        {/* Dispatch Executive jobs tab - Kept as is, assuming it fetches its own data */}
         {role === 'dispatch_executive' && tabValue === 'jobs' && (
           showReadyDispatch ? (
             <ReadyDispatchForm onBack={() => setShowReadyDispatch(false)} />
@@ -142,7 +162,8 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
               <DispatchExecutiveJobs jobs={jobs.length > 0 ? jobs : undefined} onReadyDispatch={() => setShowReadyDispatch(true)} />
           )
         )}
-        {/* Production Head jobs tab */}
+
+        {/* Production Head jobs tab - RESTORED ORIGINAL CONTENT */}
         {role === 'production_head' && tabValue === 'jobs' && (
           <div className="w-full flex flex-col items-center">
             {showProductionSteps ? (
@@ -154,7 +175,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
                 <div className="w-full grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-4 justify-items-center">
                   {jobs.length > 0 ? (
                     jobs.map(job => (
-                      <JobCard
+                      <PrintingMgrJobCard // Assuming ProductionHead also uses this card or a similar one
                         key={job.id}
                         company={job.company}
                         jobId={job.jobId}
@@ -176,7 +197,6 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) =>
             )}
           </div>
         )}
-        {/* Add other tab content here if needed */}
       </Suspense>
     </div>
   );

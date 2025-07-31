@@ -13,7 +13,7 @@ interface HeaderProps {
   tabValue: string;
   setTabValue: (value: string) => void;
   onLogout: () => void;
-  role: string; // <-- This is correct
+  role: string;
 }
 
 const sidebarConfig: {
@@ -59,7 +59,8 @@ const sidebarConfig: {
       { label: "Dashboard", tab: "dashboard" },
       { label: "Start New Job", tab: "start new job" },
       { label: "Notifications", tab: "notifications" },
-      { label: "Jobs", tab: "jobs" }
+      { label: "Jobs", tab: "jobs" },
+      { label: "Job Assigned", tab: "job assigned" } // ADDED: New tab for Planner
     ]
   },
   // ...other roles
@@ -96,6 +97,7 @@ const allTabSets: { [key: string]: { label: string; value: string }[] } = {
     { label: 'Start New Job', value: 'start new job' },
     { label: 'Notifications', value: 'notifications' },
     { label: 'Jobs', value: 'jobs' },
+    { label: 'Job Assigned', value: 'job assigned' }, // ADDED: New tab for Planner
   ],
   // ...other roles
 };
@@ -184,11 +186,10 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
       <UserSidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
-        role={role} // <-- THIS IS CRITICAL
+        role={role}
         onLogout={onLogout}
         onOptionSelect={(option) => {
           if (normalizedRole === 'admin') {
-            // Use your original switch/case for admin
             switch (option) {
               case "Dashboard":
                 setTabValue("dashboard");
@@ -216,18 +217,15 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
               case "Create new ID":
                 setShowCreateId(true);
                 break;
-              // ...other admin options
             }
             setSidebarOpen(false);
             setMenuOpen(false);
           } else if (normalizedRole === 'printing_manager' || normalizedRole === 'production_head' || normalizedRole === 'dispatch_executive') {
-            // Use config-driven approach for these roles
             const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
             if (found) setTabValue(found.tab);
             setSidebarOpen(false);
             setMenuOpen(false);
           } else if (normalizedRole === 'planner') {
-            // Handle planner role
             const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
             if (found) setTabValue(found.tab);
             setSidebarOpen(false);

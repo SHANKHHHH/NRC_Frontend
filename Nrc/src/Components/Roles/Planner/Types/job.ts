@@ -10,7 +10,6 @@ export interface Machine {
   id: string; // Machine ID (e.g., A007)
   unit: string;
   machineCode: string;
-  machineType: string; // e.g., "Corrugation", "Printing"
   description: string;
   type: string;
   capacity: number;
@@ -32,14 +31,14 @@ export interface PoDetailsPayload {
   dispatchDate: string; // ISO string
   dispatchQuantity: number;
   fluteType: string;
-  jockeyMonth: string;
+  jockeyMonth: string; // Defaulted to ""
   noOfUps: number;
   nrcDeliveryDate: string; // ISO string
   noOfSheets: number;
   poDate: string; // ISO string
   poNumber: string;
   pendingQuantity: number;
-  pendingValidity: number;
+  pendingValidity: number; // Defaulted to 0
   plant: string;
   shadeCardApprovalDate: string; // ISO string
   srNo: number; // PO's internal SR No
@@ -82,14 +81,13 @@ export interface Job {
   shadeCardApprovalDate: string | null; // Date string (ISO or YYYY-MM-DD)
   srNo: number | null; // Used for PO linkage (PO Number ID)
   jobDemand: 'high' | 'medium' | 'low' | null;
-  imageURL: string | null;
+  imageURL: string | null; // For artwork image URL (or Base64 string)
   createdAt: string;
   updatedAt: string;
   userId: string | null;
   machineId: string | null; // ID of the assigned machine
 
   // Fields that might be on the Job object if backend updates it after PO creation
-  // These are for validation on the frontend, assuming backend sets them
   poNumber: string | null; // Corresponds to P.O. Number
   unit: string | null; // Corresponds to Unit
   plant: string | null; // Corresponds to Plant
@@ -104,4 +102,27 @@ export interface Job {
 
   // Field for Job Planning Steps
   jobSteps: JobStep[] | null; // Array of steps for job planning
+}
+
+// NEW INTERFACES FOR JOB PLANNING DATA
+export interface JobPlanStep {
+  id: number;
+  stepNo: number;
+  stepName: string;
+  machineDetails: any[]; // Assuming this can be an array, or could be string if it's machineDetail
+  status: string; // e.g., "stop", "start", "planned"
+  startDate: string | null;
+  endDate: string | null;
+  user: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobPlan {
+  jobPlanId: number;
+  nrcJobNo: string;
+  jobDemand: 'high' | 'medium' | 'low' | null;
+  createdAt: string;
+  updatedAt: string;
+  steps: JobPlanStep[];
 }

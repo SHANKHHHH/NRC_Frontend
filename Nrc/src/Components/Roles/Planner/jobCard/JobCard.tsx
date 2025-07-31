@@ -28,7 +28,7 @@ const JobCard: React.FC<JobCardProps> = ({ job, onClick, onInitiateJobClick, job
       buttonDisabled = true; // Job is already initiated, button is just an indicator
     } else {
       buttonText = 'Fill details to start the job';
-      buttonColorClass = 'bg-orange-500 hover:bg-orange-600';
+      buttonColorClass = 'bg-orange-500 hover:bg-orange-600 hover:cursor-pointer' ;
       buttonAction = () => onInitiateJobClick(job);
     }
   }
