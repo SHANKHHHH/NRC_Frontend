@@ -158,7 +158,9 @@ const PlannerJobs: React.FC = () => {
 
   // New handler for clicking the "Fill details to start the job" button
   const handleInitiateJobClick = (job: Job) => {
-    navigate(`/dashboard/planner/initiate-job/${job.nrcJobNo}`);
+    // Properly encode the job number for the URL
+    const encodedJobNo = job.nrcJobNo;
+    navigate(`/dashboard/planner/initiate-job/${encodedJobNo}`);
   };
 
 

@@ -5,10 +5,11 @@ import { LuClipboardList, LuTruck, LuCalendarDays, LuTrendingUp } from "react-ic
 
 interface JobPlanningCardProps {
   jobPlan: JobPlan;
-  onClick: (jobPlan: JobPlan) => void; // This prop should now only be called by the button
+  onClick: (jobPlan: JobPlan) => void; // This is for the "View Complete Details" button
+  onCardClick: (jobPlan: JobPlan) => void; // NEW: For clicking the card itself
 }
 
-const JobPlanningCard: React.FC<JobPlanningCardProps> = ({ jobPlan, onClick }) => {
+const JobPlanningCard: React.FC<JobPlanningCardProps> = ({ jobPlan, onClick, onCardClick }) => {
   const formatDate = (dateString: string) => {
     try {
       return new Date(dateString).toLocaleDateString('en-US', {
@@ -25,8 +26,8 @@ const JobPlanningCard: React.FC<JobPlanningCardProps> = ({ jobPlan, onClick }) =
 
   return (
     <div
-      className="bg-white rounded-lg shadow-md p-4 flex flex-col justify-between h-full"
-      // Removed onClick from the main div
+      className="bg-white rounded-lg shadow-md p-4 flex flex-col justify-between h-full cursor-pointer" // Added cursor-pointer
+      onClick={() => onCardClick(jobPlan)} // ADDED: Card click navigates to steps view
     >
       <h3 className="text-lg font-semibold text-gray-800 mb-4 border-b pb-2">WORK ASSIGNMENT SUMMARY</h3>
 
@@ -66,8 +67,10 @@ const JobPlanningCard: React.FC<JobPlanningCardProps> = ({ jobPlan, onClick }) =
 
       <button
         className="w-full bg-[#00AEEF] text-white py-2 rounded-lg font-semibold text-base hover:bg-[#0099cc] transition hover:cursor-pointer shadow-md"
-        // This onClick is now the ONLY trigger for the modal
-        onClick={() => onClick(jobPlan)}
+        onClick={(e) => {
+          e.stopPropagation(); // Prevent card's onClick from firing
+          onClick(jobPlan); // This now only handles the button click
+        }}
       >
         View Complete Details
       </button>

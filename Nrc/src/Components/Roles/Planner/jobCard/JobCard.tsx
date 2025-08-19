@@ -1,6 +1,6 @@
 // src/Components/Roles/Planner/jobCard/JobCard.tsx
 import React from 'react';
-import { type Job } from '../Types/job.ts'; // Adjust path as needed
+import { type Job } from '../Types/job.ts'; 
 
 interface JobCardProps {
   job: Job;

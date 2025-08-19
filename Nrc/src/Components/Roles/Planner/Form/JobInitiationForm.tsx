@@ -37,19 +37,26 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
 
   // Helper to determine the initial step based on fetched job data
   const determineInitialStep = (currentJob: Job): FormStep => {
+    // Check if artwork details are missing
     if (!currentJob.artworkReceivedDate || !currentJob.artworkApprovedDate || !currentJob.shadeCardApprovalDate) {
       return 'artwork';
     }
+    
+    // Check if PO details are missing
     if (!currentJob.poNumber || !currentJob.unit || !currentJob.plant ||
         currentJob.totalPOQuantity === null || currentJob.dispatchQuantity === null ||
         currentJob.pendingQuantity === null || currentJob.noOfSheets === null ||
         !currentJob.poDate || !currentJob.deliveryDate || !currentJob.dispatchDate || !currentJob.nrcDeliveryDate) {
       return 'po';
     }
+    
+    // Check if more info is missing
     if (!currentJob.jobDemand || !currentJob.machineId || !currentJob.jobSteps || currentJob.jobSteps.length === 0) {
       return 'moreInfo';
     }
-    return 'artwork'; // Fallback if all are somehow filled (shouldn't be reachable if triggered by orange button)
+    
+    // If all are filled, start with artwork (this shouldn't happen for new jobs)
+    return 'artwork';
   };
 
   // Fetch job details on component mount
@@ -67,6 +74,9 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) throw new Error('Authentication token not found.');
 
+        console.log('Token:', accessToken);
+        console.log('User Role:', JSON.parse(localStorage.getItem('userData') || '{}').role);
+
         const response = await fetch(`https://nrc-backend-his4.onrender.com/api/jobs/${nrcJobNo}`, {
           method: 'GET',
           headers: {
@@ -83,6 +93,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         if (data.success && data.data) {
           const fetchedJob: Job = {
             ...data.data,
+            // Ensure all required fields have default values if missing from API
             poNumber: data.data.poNumber || null,
             unit: data.data.unit || null,
             plant: data.data.plant || null,
@@ -97,6 +108,11 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
             jobSteps: data.data.jobSteps || null,
             jobDemand: data.data.jobDemand || null,
             machineId: data.data.machineId || null,
+            // Add missing fields with defaults
+            artworkReceivedDate: data.data.artworkReceivedDate || null,
+            artworkApprovedDate: data.data.artworkApprovedDate || null,
+            shadeCardApprovalDate: data.data.shadeCardApprovalDate || null,
+            imageURL: data.data.imageURL || null,
           };
           setJob(fetchedJob);
           setCurrentStep(determineInitialStep(fetchedJob));
@@ -125,7 +141,13 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch(`https://nrc-backend-his4.onrender.com/api/jobs/${job.nrcJobNo}`, {
+              console.log('Request URL:', `https://nrc-backend-his4.onrender.com/api/jobs/${job.nrcJobNo}`);
+      console.log('Request Method:', 'PUT');
+      console.log('Request Body:', updatedFields);
+      console.log('Job Status:', job.status);
+      console.log('Job Data:', job);
+
+              const response = await fetch(`https://nrc-backend-his4.onrender.com/api/jobs/${job.nrcJobNo}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -207,7 +229,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       if (!accessToken) throw new Error('Authentication token not found.');
 
       // 1. Update main Job object (jobDemand, machineId)
-      const jobUpdateResponse = await fetch(`https://nrc-backend-his4.onrender.com/api/jobs/${job.nrcJobNo}`, {
+              const jobUpdateResponse = await fetch(`https://nrc-backend-his4.onrender.com/api/jobs/${job.nrcJobNo}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -244,7 +266,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         const updatedJob = { ...job, ...updatedJobFields, jobSteps: jobPlanningPayload.steps, updatedAt: jobPlanningResult.data.updatedAt };
         setJob(updatedJob);
         onJobUpdated(updatedJob);
-        navigate('/dashboard/planner/jobs'); // Navigate back to jobs list after final submission
+        navigate('/dashboard'); // Navigate back to jobs list after final submission
       } else {
         throw new Error(jobPlanningResult.message || 'Failed to save job planning steps.');
       }
@@ -385,7 +407,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
           <span className="block sm:inline"> {jobError}</span>
         </div>
         <button
-          onClick={() => navigate('/dashboard/planner/jobs')}
+          onClick={() => navigate('/dashboard')}
           className="mt-4 bg-[#00AEEF] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#0099cc] transition"
         >
           Back to Jobs
@@ -399,7 +421,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       <div className="flex flex-col items-center justify-center h-screen bg-gray-100">
         <p className="text-gray-500">Job not found or invalid URL.</p>
         <button
-          onClick={() => navigate('/dashboard/planner/jobs')}
+          onClick={() => navigate('/dashboard')}
           className="mt-4 bg-[#00AEEF] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#0099cc] transition"
         >
           Back to Jobs
