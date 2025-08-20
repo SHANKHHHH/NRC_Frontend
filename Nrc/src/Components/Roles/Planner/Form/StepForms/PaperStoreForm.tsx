@@ -77,7 +77,7 @@ const PaperStoreForm: React.FC<PaperStoreFormProps> = ({ jobPlanId, nrcJobNo, st
         sheetSize: formData.sheetSize,
         quantity: Number(formData.quantity),
         available: Number(formData.available),
-        issuedDate: toDateInput(formData.issuedDate) as string, // Ensure ISO string
+        issuedDate: new Date(formData.issuedDate).toISOString(), // Convert date input to ISO string
         mill: formData.mill,
         extraMargin: formData.extraMargin,
         gsm: formData.gsm,

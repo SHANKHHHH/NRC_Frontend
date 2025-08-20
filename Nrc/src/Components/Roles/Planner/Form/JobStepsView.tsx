@@ -298,7 +298,14 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
             ...payload,
-            // Add any specific fields required for paper store
+            sheetSize: '', // Will be filled by user in form
+            quantity: 0, // Will be filled by user in form (number)
+            available: 0, // Will be filled by user in form (number)
+            issuedDate: new Date().toISOString(), // Current timestamp
+            mill: '', // Will be filled by user in form
+            extraMargin: '', // Will be filled by user in form
+            gsm: '', // Will be filled by user in form
+            quality: '', // Will be filled by user in form
           };
           break;
         case 'Corrugation':
