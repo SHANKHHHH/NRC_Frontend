@@ -59,28 +59,28 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           let endpoint = '';
           switch (stepName) {
             case 'PaperStore':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/paper-store/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'Corrugation':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/corrugation/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/corrugation/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'PrintingDetails':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/printing-details/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/printing-details/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'FluteLamination':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/flute-laminate-board-conversion/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/flute-laminate-board-conversion/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'Punching':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/punching/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/punching/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'FlapPasting':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/side-flap-pasting/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/side-flap-pasting/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'QualityDept':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/quality-dept/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/quality-dept/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'DispatchProcess':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/dispatch-process/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/dispatch-process/by-job/${encodedJobNrcJobNo}`;
               break;
             default:
               return null;
@@ -125,7 +125,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const jobPlanningEndpoint = `https://nrc-backend-his4.onrender.com/api/job-planning/`;
+      const jobPlanningEndpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/`;
       console.log(`🔍 [fetchJobPlanDetails] - Endpoint: ${jobPlanningEndpoint}`);
       console.log(`🔍 [fetchJobPlanDetails] - Method: GET`);
       console.log(`🔍 [fetchJobPlanDetails] - Job Plan ID from URL: ${jobPlanId}`);
@@ -227,7 +227,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
       console.log('🔍 [updateJobPlanStepStatus] - New Status:', newStatus);
       
       // Try using jobPlanId only in the path (backend might not support nrcJobNo in path)
-      const url = `https://nrc-backend-his4.onrender.com/api/job-planning/${jobPlan.nrcJobNo}/steps/${step.stepNo}`;
+      const url = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/${jobPlan.nrcJobNo}/steps/${step.stepNo}`;
       console.log('🔍 [updateJobPlanStepStatus] - Full URL being called:', url);
       
       // First PUT request to update step status
@@ -293,7 +293,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
       // Determine endpoint and payload based on step type
       switch (step.stepName) {
         case 'PaperStore':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/paper-store';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store';
           console.log(`📝 [createStepSpecificRecord] - PAPER STORE step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -309,66 +309,125 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           };
           break;
         case 'Corrugation':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/corrugation';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/corrugation';
           console.log(`📝 [createStepSpecificRecord] - CORRUGATION step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
             ...payload,
-            // Add any specific fields required for corrugation
+            date: new Date().toISOString(), // Current timestamp
+            shift: '', // Will be filled by user in form
+            oprName: '', // Will be filled by user in form
+            machineNo: '', // Will be filled by user in form
+            quantity: 0, // Will be filled by user in form (number)
+            size: '', // Will be filled by user in form
+            gsm1: '', // Will be filled by user in form
+            gsm2: '', // Will be filled by user in form
+            flute: '', // Will be filled by user in form
+            remarks: '', // Will be filled by user in form
+            qcCheckSignBy: '', // Will be filled by user in form
           };
           break;
         case 'PrintingDetails':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/printing-details';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/printing-details';
           console.log(`📝 [createStepSpecificRecord] - PRINTING DETAILS step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
             ...payload,
-            // Add any specific fields required for printing details
+            date: new Date().toISOString(), // Current timestamp
+            shift: '', // Will be filled by user in form
+            oprName: '', // Will be filled by user in form
+            noOfColours: 0, // Will be filled by user in form (number)
+            inksUsed: '', // Will be filled by user in form
+            postPrintingFinishingOkQty: 0, // Will be filled by user in form (number)
+            wastage: 0, // Will be filled by user in form (number)
+            coatingType: '', // Will be filled by user in form
+            separateSheets: 0, // Will be filled by user in form (number)
+            extraSheets: 0, // Will be filled by user in form (number)
+            machine: '', // Will be filled by user in form
           };
           break;
         case 'FluteLamination':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/flute-laminate-board-conversion';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/flute-laminate-board-conversion';
           console.log(`📝 [createStepSpecificRecord] - FLUTE LAMINATION step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
             ...payload,
-            // Add any specific fields required for flute lamination
+            date: new Date().toISOString(), // Current timestamp
+            shift: '', // Will be filled by user in form
+            operatorName: '', // Will be filled by user in form
+            film: '', // Will be filled by user in form
+            okQty: 0, // Will be filled by user in form (number)
+            qcCheckSignBy: '', // Will be filled by user in form
+            adhesive: '', // Will be filled by user in form
+            wastage: 0, // Will be filled by user in form (number)
           };
           break;
         case 'Punching':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/punching';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/punching';
           console.log(`📝 [createStepSpecificRecord] - PUNCHING step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
             ...payload,
-            // Add any specific fields required for punching
+            date: new Date().toISOString(), // Current timestamp
+            shift: '', // Will be filled by user in form
+            operatorName: '', // Will be filled by user in form
+            okQty: 0, // Will be filled by user in form (number)
+            machine: '', // Will be filled by user in form
+            qcCheckSignBy: '', // Will be filled by user in form
+            die: '', // Will be filled by user in form
+            wastage: 0, // Will be filled by user in form (number)
+            remarks: '', // Will be filled by user in form
           };
           break;
         case 'FlapPasting':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/side-flap-pasting';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/side-flap-pasting';
           console.log(`📝 [createStepSpecificRecord] - FLAP PASTING step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
             ...payload,
-            // Add any specific fields required for flap pasting
+            machineNo: '', // Will be filled by user in form
+            date: new Date().toISOString(), // Current timestamp
+            shift: '', // Will be filled by user in form
+            operatorName: '', // Will be filled by user in form
+            adhesive: '', // Will be filled by user in form
+            quantity: 0, // Will be filled by user in form (number)
+            wastage: 0, // Will be filled by user in form (number)
+            qcCheckSignBy: '', // Will be filled by user in form
+            remarks: '', // Will be filled by user in form
           };
           break;
         case 'QualityDept':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/quality-dept';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/quality-dept';
           console.log(`📝 [createStepSpecificRecord] - QUALITY DEPT step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
             ...payload,
-            // Add any specific fields required for quality dept
+            date: new Date().toISOString(), // Current timestamp
+            shift: '', // Will be filled by user in form
+            operatorName: '', // Will be filled by user in form
+            checkedBy: '', // Will be filled by user in form
+            rejectedQty: 0, // Will be filled by user in form (number)
+            passQty: 0, // Will be filled by user in form (number)
+            reasonForRejection: '', // Will be filled by user in form
+            remarks: '', // Will be filled by user in form
+            qcCheckSignBy: '', // Will be filled by user in form
           };
           break;
         case 'DispatchProcess':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/dispatch-process';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/dispatch-process';
           console.log(`📝 [createStepSpecificRecord] - DISPATCH PROCESS step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
             ...payload,
-            // Add any specific fields required for dispatch process
+            date: new Date().toISOString(), // Current timestamp
+            shift: '', // Will be filled by user in form
+            operatorName: '', // Will be filled by user in form
+            noOfBoxes: 0, // Will be filled by user in form (number)
+            dispatchNo: '', // Will be filled by user in form
+            dispatchDate: new Date().toISOString(), // Current timestamp
+            remarks: '', // Will be filled by user in form
+            balanceQty: 0, // Will be filled by user in form (number)
+            qcCheckSignBy: '', // Will be filled by user in form
           };
           break;
         default:
@@ -452,7 +511,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
       console.log('🔍 [handleUpdateStepProperty] - Property:', property);
       console.log('🔍 [handleUpdateStepProperty] - Value:', value);
       // Try using jobPlanId only in the path (backend might not support nrcJobNo in path)
-      const endpoint = `https://nrc-backend-his4.onrender.com/api/job-planning/${encodeURIComponent(jobPlan.nrcJobNo)}/steps/${stepNo}`;
+      const endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/${encodeURIComponent(jobPlan.nrcJobNo)}/steps/${stepNo}`;
       console.log('🔍 [handleUpdateStepProperty] - Full Endpoint:', endpoint);
       const response = await fetch(endpoint, {
         method: 'PUT',
@@ -514,6 +573,9 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
 
         // PUT 2: Update step-specific details
         (async () => {
+          console.log('🔍 [handleCompleteWork] - Making PUT request to:', put2Endpoint);
+          console.log('🔍 [handleCompleteWork] - PUT payload:', put2Payload);
+          
           const detailsUpdateResponse = await fetch(put2Endpoint, {
             method: 'PUT',
             headers: {
@@ -523,11 +585,17 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
             body: JSON.stringify(put2Payload),
           });
 
+          console.log('🔍 [handleCompleteWork] - PUT response status:', detailsUpdateResponse.status);
+          console.log('🔍 [handleCompleteWork] - PUT response ok:', detailsUpdateResponse.ok);
+
           if (!detailsUpdateResponse.ok) {
             const errorData = await detailsUpdateResponse.json();
+            console.error('🔍 [handleCompleteWork] - PUT request failed:', errorData);
             throw new Error(errorData.message || `Failed to update ${step.stepName} details: ${detailsUpdateResponse.status} ${detailsUpdateResponse.statusText}`);
           }
           const detailsUpdateResult = await detailsUpdateResponse.json();
+          console.log('🔍 [handleCompleteWork] - PUT response data:', detailsUpdateResult);
+          
           if (!detailsUpdateResult.success) {
             throw new Error(detailsUpdateResult.message || `Failed to update ${step.stepName} details.`);
           }
@@ -566,7 +634,19 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
 
     switch (showStepSpecificForm) {
       case 'PaperStore':
-        return <PaperStoreForm {...commonFormProps} onCompleteWork={(payload) => handleCompleteWork(stepToEdit, payload, `https://nrc-backend-his4.onrender.com/api/paper-store/${stepToEdit.id}`, stepToEdit.user || '')} />;
+        return <PaperStoreForm {...commonFormProps} onCompleteWork={(payload) => {
+          console.log('🔍 [PaperStore onCompleteWork] - Step:', stepToEdit);
+          console.log('🔍 [PaperStore onCompleteWork] - PaperStore Details:', stepToEdit.paperStoreDetails);
+          console.log('🔍 [PaperStore onCompleteWork] - Payload:', payload);
+          
+          // Use the step-specific record ID if available, otherwise use the by-job endpoint
+          const endpoint = stepToEdit.paperStoreDetails?.id 
+            ? `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store/${stepToEdit.paperStoreDetails.id}`
+            : `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store/by-job/${encodeURIComponent(jobPlan.nrcJobNo)}`;
+          
+          console.log('🔍 [PaperStore onCompleteWork] - Using endpoint:', endpoint);
+          return handleCompleteWork(stepToEdit, payload, endpoint, stepToEdit.user || '');
+        }} />;
       case 'Corrugation':
       case 'PrintingDetails':
       case 'FluteLamination':

@@ -8,6 +8,8 @@ import ProtectedRoute from './Routes/ProtectedRoute';
 const Dashboard = lazy(() => import('./Pages/Dashboard/Dashboard'));
 const JobInitiationForm = lazy(() => import('./Components/Roles/Planner/Form/JobInitiationForm'));
 const JobStepsView = lazy(() => import('./Components/Roles/Planner/Form/JobStepsView')); // IMPORTED: New component
+const JobDetailsContainer = lazy(() => import('./Components/Roles/Admin/JobDetailsComponents/JobDetailsContainer')); // New job details page
+const CompletedJobsView = lazy(() => import('./Components/Roles/Admin/CompletedJobsView')); // New completed jobs view
 
 function App() {
   const [tabValue, setTabValue] = useState('dashboard');
@@ -59,6 +61,20 @@ function App() {
                     path="planner/job-steps/:jobPlanId" // New route for JobStepsView
                     element={
                       <JobStepsView />
+                    }
+                  />
+                  {/* Nested Route for JobDetailsContainer */}
+                  <Route
+                    path="job-details" // New route for job details
+                    element={
+                      <JobDetailsContainer />
+                    }
+                  />
+                  {/* Nested Route for CompletedJobsView */}
+                  <Route
+                    path="completed-jobs" // New route for completed jobs
+                    element={
+                      <CompletedJobsView />
                     }
                   />
                 </Routes>

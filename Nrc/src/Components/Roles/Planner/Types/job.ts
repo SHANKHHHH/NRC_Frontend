@@ -79,7 +79,7 @@ export interface CorrugationPayload {
   shift: string;
   oprName: string;
   machineNo: string;
-  quantity: number; // Added quantity based on Dart code
+  noOfSheets: number;
   size: string;
   gsm1: string;
   gsm2: string;
@@ -93,10 +93,16 @@ export interface PrintingDetailsPayload {
   jobStepId: number;
   jobNrcJobNo: string;
   status: 'in_progress' | 'accept';
-  quantity: number; // From "Qty Sheet"
   date: string; // ISO string
+  shift: string;
   oprName: string; // From "Operator Name"
+  noOfColours: number;
+  inksUsed: string;
+  postPrintingFinishingOkQty: number;
   wastage: number; // From "Wastage"
+  coatingType: string;
+  separateSheets: number;
+  extraSheets: number;
   machine: string; // From "Machine"
 }
 
@@ -109,7 +115,7 @@ export interface FluteLaminationPayload {
   shift: string;
   operatorName: string; // From "Operator Name"
   film: string; // From "Film Type"
-  quantity: number; // From "Qty Sheet"
+  okQty: number;
   qcCheckSignBy: string; // From "QC Sign By"
   adhesive: string; // From "Adhesive"
   wastage: number; // From "Wastage"
@@ -121,9 +127,11 @@ export interface PunchingPayload {
   jobNrcJobNo: string;
   status: 'in_progress' | 'accept';
   date: string; // ISO string
+  shift: string;
   operatorName: string; // From "Operator Name"
+  okQty: number;
   machine: string; // From "Machine"
-  quantity: number; // From "Qty Sheet"
+  qcCheckSignBy: string;
   die: string; // From "Die Used"
   wastage: number; // From "Wastage"
   remarks: string; // From "Remarks"
@@ -134,15 +142,15 @@ export interface FlapPastingPayload {
   jobStepId: number;
   jobNrcJobNo: string;
   status: 'in_progress' | 'accept';
+  machineNo: string; // From "Machine No"
   date: string; // ISO string
   shift: string; // From Dart code, not in form, will default
   operatorName: string; // From "Operator Name"
-  machineNo: string; // From "Machine No"
   adhesive: string; // From "Adhesive"
   quantity: number; // From "Quantity"
   wastage: number; // From "Wastage"
+  qcCheckSignBy: string;
   remarks: string; // From "Remarks"
-  user: string; // From "Emp Id"
 }
 
 export interface QCDetailsPayload {
@@ -151,11 +159,14 @@ export interface QCDetailsPayload {
   jobNrcJobNo: string;
   status: 'in_progress' | 'accept';
   date: string; // ISO string
+  shift: string;
+  operatorName: string;
   checkedBy: string; // From "Checked By"
-  quantity: number; // From "Qty Sheet"
   rejectedQty: number; // From "Reject Quantity"
+  passQty: number;
   reasonForRejection: string; // From "Reason for Rejection"
   remarks: string; // From "Remarks"
+  qcCheckSignBy: string;
 }
 
 export interface DispatchDetailsPayload {
@@ -164,12 +175,14 @@ export interface DispatchDetailsPayload {
   jobNrcJobNo: string;
   status: 'in_progress' | 'accept';
   date: string; // ISO string
+  shift: string;
   operatorName: string; // From "Operator Name"
-  quantity: number; // From "No of Boxes"
+  noOfBoxes: number;
   dispatchNo: string; // From "Dispatch No"
   dispatchDate: string; // ISO string
-  balanceQty: number; // From "Balance Qty"
   remarks: string; // From "Remarks"
+  balanceQty: number; // From "Balance Qty"
+  qcCheckSignBy: string;
 }
 
 

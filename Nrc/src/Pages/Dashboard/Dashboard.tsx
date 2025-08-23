@@ -9,6 +9,7 @@ const Summary = lazy(() => import('../../Components/Roles/Admin/Production_Head/
 const ProductionUpdate = lazy(() => import('../../Components/Roles/Admin/Production_Head/ProductionUpdate'));
 const DispatchOverview = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchOverview'));
 const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchSummary'));
+const AdminDashboard = lazy(() => import('../../Components/Roles/Admin/AdminDashboard.tsx'));
 import PrintingMgrJobCard from '../../Components/Roles/PrintingMgr/job'; // Renamed import to avoid conflict
 import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
 import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';
@@ -82,6 +83,9 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
     <div className="px-4 sm:px-8 py-8 bg-[#f7f7f7] min-h-screen">
       <Suspense fallback={<div>Loading...</div>}>
         {/* Admin Role Tabs */}
+        {role === 'admin' && tabValue === 'dashboard' && (
+          <AdminDashboard />
+        )}
         {role === 'admin' && tabValue === 'planner' && (
           <>
             <OrderSummary />

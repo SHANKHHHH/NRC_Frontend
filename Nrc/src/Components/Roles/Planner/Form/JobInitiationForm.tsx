@@ -77,7 +77,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         console.log('Token:', accessToken);
         console.log('User Role:', JSON.parse(localStorage.getItem('userData') || '{}').role);
 
-        const response = await fetch(`https://nrc-backend-his4.onrender.com/api/jobs/${nrcJobNo}`, {
+        const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${nrcJobNo}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -141,13 +141,13 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-              console.log('Request URL:', `https://nrc-backend-his4.onrender.com/api/jobs/${job.nrcJobNo}`);
+              console.log('Request URL:', `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${job.nrcJobNo}`);
       console.log('Request Method:', 'PUT');
       console.log('Request Body:', updatedFields);
       console.log('Job Status:', job.status);
       console.log('Job Data:', job);
 
-              const response = await fetch(`https://nrc-backend-his4.onrender.com/api/jobs/${job.nrcJobNo}`, {
+              const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${job.nrcJobNo}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -185,7 +185,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
 
       const payloadWithJobNo = { ...poDetails, nrcJobNo: job.nrcJobNo };
 
-      const response = await fetch('https://nrc-backend-his4.onrender.com/api/purchase-orders/create', {
+      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/purchase-orders/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -229,7 +229,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       if (!accessToken) throw new Error('Authentication token not found.');
 
       // 1. Update main Job object (jobDemand, machineId)
-              const jobUpdateResponse = await fetch(`https://nrc-backend-his4.onrender.com/api/jobs/${job.nrcJobNo}`, {
+              const jobUpdateResponse = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${job.nrcJobNo}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -248,7 +248,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       }
 
       // 2. Send job planning steps
-      const jobPlanningResponse = await fetch('https://nrc-backend-his4.onrender.com/api/job-planning/', {
+      const jobPlanningResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

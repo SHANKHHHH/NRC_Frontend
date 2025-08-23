@@ -64,7 +64,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
       }
 
       // API endpoint
-      const API_ENDPOINT = "https://nrc-backend-his4.onrender.com/api/auth/login";
+      const API_ENDPOINT = "http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/login";
 
       // Make POST request to backend with the expected payload format
       const response = await axios.post(API_ENDPOINT, { id, password });
@@ -207,23 +207,18 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
                 const testUserData = {
                   id: formData.role === "admin" ? "NRC001" : "NRC002",
                   userActive: true,
-                  roles: [formData.role] // Use roles array like backend
+                  roles: [formData.role] // Use the ACTUAL selected role from form
                 };
 
                 // Store test data in localStorage with the correct key 'accessToken'
-                // Using the new access token you provided
-                localStorage.setItem("accessToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ik5SQzAwMSIsImlhdCI6MTc1NDYzMTg4MiwiZXhwIjoxNzU3MjIzODgyfQ.anO77nQsdX8QxmaWIlk2AIGYxfaNO8HCw2PXTchFKkM");
+                localStorage.setItem("accessToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ik5SQzAwMSIsImlhdCI6MTc1NTk0NjI4MiwiZXhwIjoxNzU4NTM4MjgyfQ.x96Yh3gBmDv1tcKxXBGQK2tAExAwMfuYyVvqZsg2Q3s");
                 localStorage.setItem("userData", JSON.stringify(testUserData));
 
                 setIsAuthenticated(true);
                 
-                // Handle roles array for test login too
-                if (testUserData.roles && testUserData.roles.length > 0) {
-                  setUserRole(testUserData.roles[0]);
-                  console.log('Test login - User role set to:', testUserData.roles[0]);
-                } else {
-                  setUserRole(null);
-                }
+                // Use the ACTUAL selected role, not the backend response
+                setUserRole(formData.role); // This will use "planner" when you select planner
+                console.log('Test login - User role set to:', formData.role);
                 
                 navigate('/dashboard');
               }}
