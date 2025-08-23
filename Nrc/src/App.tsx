@@ -56,6 +56,15 @@ function App() {
                       />
                     }
                   />
+                  {/* New route for Add PO (general form) */}
+                  <Route
+                    path="planner/initiate-job/new"
+                    element={
+                      <JobInitiationForm
+                        onJobUpdated={handleJobUpdatedInApp}
+                      />
+                    }
+                  />
                   {/* Nested Route for JobStepsView */}
                   <Route
                     path="planner/job-steps/:jobPlanId" // New route for JobStepsView
