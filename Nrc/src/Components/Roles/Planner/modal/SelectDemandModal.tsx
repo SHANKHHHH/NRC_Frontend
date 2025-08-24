@@ -8,10 +8,10 @@ interface SelectDemandModalProps {
   onClose: () => void;
 }
 
-const demandOptions: { value: Job['jobDemand']; label: string; description: string }[] = [
-  { value: 'high', label: 'High', description: 'Urgent Production, priority Scheduling' },
-  { value: 'medium', label: 'Medium', description: 'Standard production timeline' },
-  { value: 'low', label: 'Low', description: 'Flexible timeline, can be scheduled as available.' },
+// Updated demand options: Urgent maps to "high", Regular maps to "medium"
+const demandOptions: { value: Job['jobDemand']; label: string; description: string; uiLabel: string }[] = [
+  { value: 'high', label: 'Urgent', description: 'Priority scheduling, flexible machine assignment', uiLabel: 'Urgent' },
+  { value: 'medium', label: 'Regular', description: 'Standard production timeline, machines required for selected steps', uiLabel: 'Regular' },
 ];
 
 const SelectDemandModal: React.FC<SelectDemandModalProps> = ({ currentDemand, onSelect, onClose }) => {
@@ -37,18 +37,47 @@ const SelectDemandModal: React.FC<SelectDemandModalProps> = ({ currentDemand, on
 
           <div className="w-full space-y-4">
             {demandOptions.map(option => (
-              <label key={option.value} className="flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50">
+              <label 
+                key={option.value} 
+                className={`flex items-center p-4 border-2 rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 ${
+                  selectedOption === option.value 
+                    ? option.value === 'high'
+                      ? 'border-red-400 bg-red-50 shadow-lg' // Urgent selected
+                      : 'border-[#00AEEF] bg-[#00AEEF]/10 shadow-lg' // Regular selected
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
+              >
                 <input
                   type="radio"
                   name="demand"
-                  value={option.value || ''} // CORRECTED: Ensure value is always a string
+                  value={option.value || ''}
                   checked={selectedOption === option.value}
                   onChange={() => setSelectedOption(option.value)}
                   className="form-radio h-5 w-5 text-[#00AEEF] border-gray-300 focus:ring-[#00AEEF]"
                 />
-                <div className="ml-3">
-                  <span className="block text-base font-medium text-gray-800">{option.label}</span>
-                  <span className="block text-sm text-gray-500">{option.description}</span>
+                <div className="ml-3 flex-1">
+                  <span className={`block text-base font-semibold ${
+                    selectedOption === option.value
+                      ? option.value === 'high'
+                        ? 'text-red-700' // Urgent selected
+                        : 'text-[#00AEEF]' // Regular selected
+                      : 'text-gray-800'
+                  }`}>
+                    {option.uiLabel}
+                  </span>
+                  <span className="block text-sm text-gray-600 mt-1">{option.description}</span>
+                  
+                  {/* Additional info based on selection */}
+                  {option.value === 'high' && (
+                    <div className="mt-2 p-2 bg-red-100 rounded text-xs text-red-700">
+                      <strong>Note:</strong> Machine assignment is flexible - not all machines required
+                    </div>
+                  )}
+                  {option.value === 'medium' && (
+                    <div className="mt-2 p-2 bg-[#00AEEF]/20 rounded text-xs text-[#00AEEF]">
+                      <strong>Note:</strong> Machine assignment is mandatory for all selected steps
+                    </div>
+                  )}
                 </div>
               </label>
             ))}

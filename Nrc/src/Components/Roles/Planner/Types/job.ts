@@ -14,7 +14,7 @@ export interface MachineDetailInStep { // For machineDetails array in JobPlanSte
 }
 
 export interface Machine {
-  machineType: any;
+  machineType: 'inside Machine' | 'PaperStore' | 'QualityDept' | 'DispatchProcess' | 'Not Editable';
   id: string; // Machine ID (e.g., A007)
   unit: string;
   machineCode: string;

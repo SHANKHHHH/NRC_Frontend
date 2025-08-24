@@ -18,12 +18,15 @@ const sidebarConfig: Record<string, { displayName: string; options: string[] }> 
       'Dashboard',
       'Notifications',
       'Create new ID',
+      'User Details',
       'Manage Access',
       'Planner',
       'Printing Manager',
       'Production Head',
       'Dispatch Executive',
       'QC Manager',
+      'Edit Machine', // ADDED: Edit Machine option for Admin
+      'Test Edit Machine', // TEMPORARY: Test option for debugging
     ],
   },
   printing_manager: {
@@ -40,7 +43,7 @@ const sidebarConfig: Record<string, { displayName: string; options: string[] }> 
   },
   planner: {
     displayName: 'Planner',
-    options: ['Dashboard', 'Start New Job', 'Notifications', 'Jobs', 'Job Assigned'], // ADDED: New option for Planner
+    options: ['Dashboard', 'Start New Job', 'Notifications', 'Jobs', 'Job Assigned', 'Edit Machine'], // ADDED: Edit Machine option for Planner
   },
 };
 

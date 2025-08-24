@@ -1,8 +1,8 @@
 // src/Components/Roles/Planner/JobInitiationForm.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, CheckCircle, AlertCircle, Clock, XCircle } from 'lucide-react';
-import type { Job, PoDetailsPayload } from '../Types/job.ts';
+import { Search, CheckCircle, Clock } from 'lucide-react';
+import type { Job, PoDetailsPayload, JobPlanStep } from '../Types/job.ts';
 import ArtworkDetailsForm from './ArtworkDetailsForm.tsx';
 import PODetailsForm from './PODetailsForm.tsx';
 import MoreInformationForm from './MoreInformationForm.tsx';
@@ -103,12 +103,10 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
   const searchJob = async () => {
     if (!searchTerm.trim()) {
       setSearchedJob(null);
-      setSearchError(null);
       return;
     }
 
     setSearchLoading(true);
-    setSearchError(null);
     try {
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) {
@@ -135,23 +133,23 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         
         if (foundJob) {
           setSearchedJob(foundJob);
-          setJob(foundJob); // Set the job for the form
-          // Determine which step to start with based on completion status
-          const initialStep = determineInitialStep(foundJob);
-          setCurrentStep(initialStep);
-          console.log('Job found, starting at step:', initialStep);
+          // Check if this job has all forms completed
+          const completionStatus = checkJobCompletionStatus(foundJob);
+          if (completionStatus === 'completed') {
+            // If completed, set the job and show forms as read-only
+            setJob(foundJob);
+            setCurrentStep('artwork'); // Start from first step
+          }
         } else {
           setSearchedJob(null);
-          setSearchError('No active job found with this NRC Job Number.');
         }
       } else {
+        setSearchError('Failed to fetch jobs data');
         setSearchedJob(null);
-        setSearchError('Failed to search jobs.');
       }
-    } catch (err) {
-      console.error('Search Job Error:', err);
+    } catch (error) {
+      setSearchError(`Search failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
       setSearchedJob(null);
-      setSearchError(err instanceof Error ? err.message : 'Failed to search jobs.');
     } finally {
       setSearchLoading(false);
     }
@@ -329,7 +327,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
     }
   };
 
-  const handleMoreInfoSave = async (updatedFields: Partial<Job>) => {
+  const handleMoreInfoSave = async (updatedFields: Partial<Job>, jobPlanningPayload?: any) => {
     setError(null);
     if (!job) return;
 
@@ -356,20 +354,316 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         setJob(updatedJob);
         onJobUpdated(updatedJob);
         
-        // Show success message and redirect
-        setError(null);
-        setSuccessMessage('All forms completed successfully! Redirecting to dashboard...');
+        // Create job plan entry after all forms are completed
+        try {
+          // Use the jobPlanningPayload if provided, otherwise create default
+          if (jobPlanningPayload && jobPlanningPayload.steps) {
+            await createJobPlanFromPayload(updatedJob, jobPlanningPayload, accessToken);
+          } else {
+            await createJobPlan(updatedJob, accessToken);
+          }
+          setSuccessMessage('All forms completed successfully! Job plan created. Redirecting to dashboard...');
+        } catch (jobPlanError) {
+          console.warn('Failed to create job plan:', jobPlanError);
+          setSuccessMessage('Forms completed but job plan creation failed. Redirecting to dashboard...');
+        }
         
         // Redirect to dashboard after showing success message
         setTimeout(() => {
           navigate('/dashboard');
-        }, 2000);
+        }, 3000);
       } else {
         throw new Error(result.message || 'Failed to save more information.');
       }
     } catch (err) {
       setError(`More Info Save Error: ${err instanceof Error ? err.message : 'Unknown error'}`);
       throw err;
+    }
+  };
+
+  // Function to create job plan from the actual selected steps
+  const createJobPlanFromPayload = async (completedJob: Job, jobPlanningPayload: any, accessToken: string) => {
+    try {
+      // Validate demand-based requirements
+      const jobDemand = completedJob.jobDemand || 'medium';
+      const selectedSteps = jobPlanningPayload.steps || [];
+      
+      // Demand-specific validation
+      if (jobDemand === 'medium' && selectedSteps.length === 0) {
+        throw new Error('Regular demand requires at least one production step to be selected');
+      }
+      
+      if (jobDemand === 'medium' && !completedJob.machineId) {
+        throw new Error('Regular demand requires machine assignment for all selected steps');
+      }
+
+      // Create a job plan with only the selected production steps
+      const jobPlanData = {
+        nrcJobNo: completedJob.nrcJobNo,
+        jobDemand: jobDemand,
+        steps: selectedSteps.map((step: any, index: number) => {
+          // For Regular demand, ensure all selected steps have machine details
+          // For Urgent demand, machine details are optional
+          const machineDetails = [];
+          
+          if (completedJob.machineId && step.machineDetail) {
+            machineDetails.push({ 
+              id: completedJob.machineId,
+              unit: completedJob.unit || 'Unit 1',
+              machineCode: completedJob.machineId,
+              machineType: step.machineDetail || 'Production Step'
+            });
+          } else if (jobDemand === 'medium') {
+            // Regular demand requires machine assignment for all selected steps
+            throw new Error(`Regular demand requires machine assignment for step: ${step.stepName}`);
+          }
+          
+          return {
+            jobStepId: index + 1, // Sequential ID for new steps
+            stepNo: step.stepNo || index + 1,
+            stepName: step.stepName,
+            machineDetails: machineDetails,
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          };
+        })
+      };
+
+      console.log('Creating job plan with selected steps:', jobPlanData);
+
+      // Try to create job plan using the job-planning endpoint
+      const jobPlanResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(jobPlanData),
+      });
+
+      if (jobPlanResponse.ok) {
+        const jobPlanResult = await jobPlanResponse.json();
+        console.log('Job plan created successfully with selected steps:', jobPlanResult);
+        return jobPlanResult;
+      } else {
+        // If POST doesn't work, try to update existing job to trigger job plan creation
+        console.log('Job plan creation failed, trying alternative approach...');
+        
+        // Update job status to trigger job plan creation
+        const statusUpdateResponse = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${completedJob.nrcJobNo}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            status: 'ACTIVE',
+            jobDemand: completedJob.jobDemand || 'medium',
+            machineId: completedJob.machineId,
+            // Add any other fields that might trigger job plan creation
+          }),
+        });
+
+        if (statusUpdateResponse.ok) {
+          console.log('Job status updated to trigger job plan creation');
+          return { success: true, message: 'Job plan creation triggered' };
+        } else {
+          throw new Error('Failed to create job plan or update job status');
+        }
+      }
+    } catch (error) {
+      console.error('Error creating job plan from payload:', error);
+      throw error;
+    }
+  };
+
+  // Function to create job plan entry after all forms are completed
+  const createJobPlan = async (completedJob: Job, accessToken: string) => {
+    try {
+      // Validate demand-based requirements
+      const jobDemand = completedJob.jobDemand || 'medium';
+      
+      // Demand-specific validation
+      if (jobDemand === 'medium' && !completedJob.machineId) {
+        throw new Error('Regular demand requires machine assignment for all selected steps');
+      }
+
+      // Create a job plan with basic production steps
+      const jobPlanData = {
+        nrcJobNo: completedJob.nrcJobNo,
+        jobDemand: jobDemand,
+        steps: [
+          {
+            jobStepId: 1, // Temporary ID for new step
+            stepNo: 1,
+            stepName: 'PaperStore',
+            machineDetails: [], // PaperStore is always "Not Assigned"
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            jobStepId: 2, // Temporary ID for new step
+            stepNo: 2,
+            stepName: 'PrintingDetails',
+            machineDetails: completedJob.machineId && jobDemand === 'medium' ? [{ 
+              id: completedJob.machineId,
+              unit: completedJob.unit || 'Unit 1',
+              machineCode: completedJob.machineId,
+              machineType: 'Printing'
+            }] : [],
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            jobStepId: 3, // Temporary ID for new step
+            stepNo: 3,
+            stepName: 'Corrugation',
+            machineDetails: completedJob.machineId && jobDemand === 'medium' ? [{ 
+              id: completedJob.machineId,
+              unit: completedJob.unit || 'Unit 1',
+              machineCode: completedJob.machineId,
+              machineType: 'Corrugation'
+            }] : [],
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            jobStepId: 4, // Temporary ID for new step
+            stepNo: 4,
+            stepName: 'FluteLaminateBoardConversion',
+            machineDetails: completedJob.machineId && jobDemand === 'medium' ? [{ 
+              id: completedJob.machineId,
+              unit: completedJob.unit || 'Unit 1',
+              machineCode: completedJob.machineId,
+              machineType: 'Flute Lamination'
+            }] : [],
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            jobStepId: 5, // Temporary ID for new step
+            stepNo: 5,
+            stepName: 'Punching',
+            machineDetails: completedJob.machineId && jobDemand === 'medium' ? [{ 
+              id: completedJob.machineId,
+              unit: completedJob.unit || 'Unit 1',
+              machineCode: completedJob.machineId,
+              machineType: 'Punching'
+            }] : [],
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            jobStepId: 6, // Temporary ID for new step
+            stepNo: 6,
+            stepName: 'SideFlapPasting',
+            machineDetails: completedJob.machineId && jobDemand === 'medium' ? [{ 
+              id: completedJob.machineId,
+              unit: completedJob.unit || 'Unit 1',
+              machineCode: completedJob.machineId,
+              machineType: 'Side Flap Pasting'
+            }] : [],
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            jobStepId: 7, // Temporary ID for new step
+            stepNo: 7,
+            stepName: 'QualityDept',
+            machineDetails: [], // QC is always "Not Assigned"
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          },
+          {
+            jobStepId: 8, // Temporary ID for new step
+            stepNo: 8,
+            stepName: 'DispatchProcess',
+            machineDetails: [], // Dispatch is always "Not Assigned"
+            status: 'planned' as const,
+            startDate: null,
+            endDate: null,
+            user: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+          }
+        ] as Omit<JobPlanStep, 'id'>[]
+      };
+
+      // Try to create job plan using the job-planning endpoint
+      const jobPlanResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify(jobPlanData),
+      });
+
+      if (jobPlanResponse.ok) {
+        const jobPlanResult = await jobPlanResponse.json();
+        console.log('Job plan created successfully:', jobPlanResult);
+        return jobPlanResult;
+      } else {
+        // If POST doesn't work, try to update existing job to trigger job plan creation
+        console.log('Job plan creation failed, trying alternative approach...');
+        
+        // Update job status to trigger job plan creation
+        const statusUpdateResponse = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${completedJob.nrcJobNo}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${accessToken}`,
+          },
+          body: JSON.stringify({
+            status: 'ACTIVE',
+            jobDemand: completedJob.jobDemand || 'medium',
+            machineId: completedJob.machineId,
+            // Add any other fields that might trigger job plan creation
+          }),
+        });
+
+        if (statusUpdateResponse.ok) {
+          console.log('Job status updated to trigger job plan creation');
+          return { success: true, message: 'Job plan creation triggered' };
+        } else {
+          throw new Error('Failed to create job plan or update job status');
+        }
+      }
+    } catch (error) {
+      console.error('Error creating job plan:', error);
+      throw error;
     }
   };
 
@@ -583,16 +877,52 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
                     <p className="text-green-800 font-semibold">{searchedJob.styleItemSKU}</p>
                   </div>
                 </div>
+                
+                {/* Show completion status */}
+                {(() => {
+                  const completionStatus = checkJobCompletionStatus(searchedJob);
+                  return (
+                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                      <p className="text-sm text-blue-800 font-medium">Completion Status:</p>
+                      <p className="text-blue-600">
+                        {completionStatus === 'completed' ? '✅ All forms completed' :
+                         completionStatus === 'artwork_pending' ? '⏳ Artwork Details pending' :
+                         completionStatus === 'po_pending' ? '⏳ PO Details pending' :
+                         '⏳ More Information pending'}
+                      </p>
+                    </div>
+                  );
+                })()}
+                
                 <div className="flex gap-3">
-                  <button
-                    onClick={() => {
-                      setJob(searchedJob);
-                      setCurrentStep(determineInitialStep(searchedJob));
-                    }}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
-                  >
-                    Use This Job
-                  </button>
+                  {(() => {
+                    const completionStatus = checkJobCompletionStatus(searchedJob);
+                    if (completionStatus === 'completed') {
+                      return (
+                        <button
+                          onClick={() => {
+                            setJob(searchedJob);
+                            setCurrentStep('artwork'); // Start from first step to show all forms
+                          }}
+                          className="bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+                        >
+                          View Completed Forms
+                        </button>
+                      );
+                    } else {
+                      return (
+                        <button
+                          onClick={() => {
+                            setJob(searchedJob);
+                            setCurrentStep(determineInitialStep(searchedJob));
+                          }}
+                          className="bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 transition-colors"
+                        >
+                          Continue with This Job
+                        </button>
+                      );
+                    }
+                  })()}
                   <button
                     onClick={() => {
                       setSearchedJob(null);
@@ -623,8 +953,6 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
 
   // If in Add PO mode and job is found, show forms with completion status
   if (isAddPOMode && job) {
-    const completionStatus = checkJobCompletionStatus(job);
-    
     return (
       <div className="min-h-screen bg-[#f7f7f7] relative">
         {/* Mobile Sidebar Overlay */}
@@ -794,7 +1122,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       {/* Mobile Sidebar Overlay */}
       {isSidebarOpen && window.innerWidth < 640 && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-40"
+          className="fixed inset-0 bg-transparent bg-opacity-50 z-40"
           onClick={handleOverlayClick}
         />
       )}

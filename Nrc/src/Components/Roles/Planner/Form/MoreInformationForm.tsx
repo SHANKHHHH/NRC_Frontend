@@ -30,7 +30,7 @@ const MoreInformationForm: React.FC<MoreInformationFormProps> = ({ job, onSave, 
       // For now, we'll create a placeholder if the full object isn't available
       setSelectedMachine(prev => prev || { // Only set if not already set by user interaction
         id: job.machineId || '', // FIXED: Provide empty string if job.machineId is null
-        machineType: '',
+        machineType: 'inside Machine' as const,
         description: job.machineId || '', // FIXED: Provide empty string if job.machineId is null
         unit: '',
         machineCode: '',
@@ -46,6 +46,23 @@ const MoreInformationForm: React.FC<MoreInformationFormProps> = ({ job, onSave, 
     }
   }, [job.machineId]);
 
+  // Get demand display label
+  const getDemandDisplayLabel = (demand: Job['jobDemand']) => {
+    switch (demand) {
+      case 'high': return 'Urgent';
+      case 'medium': return 'Regular';
+      default: return 'Choose Demand Level';
+    }
+  };
+
+  // Get demand styling
+  const getDemandStyling = (demand: Job['jobDemand']) => {
+    switch (demand) {
+      case 'high': return 'border-red-400 bg-red-50 text-red-700';
+      case 'medium': return 'border-[#00AEEF] bg-[#00AEEF]/10 text-[#00AEEF]';
+      default: return 'border-gray-300 bg-white text-gray-500';
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -54,8 +71,28 @@ const MoreInformationForm: React.FC<MoreInformationFormProps> = ({ job, onSave, 
     setError(null);
     setIsSubmitting(true);
 
-    if (!jobDemand || !selectedSteps || selectedSteps.length === 0 || !selectedMachine) {
-      setError('All More Information fields (Demand, Steps, Machine) are required.');
+    // Basic validation
+    if (!jobDemand) {
+      setError('Please select a demand level.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!selectedSteps || selectedSteps.length === 0) {
+      setError('Please select at least one production step.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Demand-specific validation
+    if (jobDemand === 'medium' && selectedSteps.length === 0) {
+      setError('Regular demand requires at least one production step to be selected.');
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (jobDemand === 'medium' && !selectedMachine) {
+      setError('Regular demand requires machine assignment for all selected steps.');
       setIsSubmitting(false);
       return;
     }
@@ -63,7 +100,7 @@ const MoreInformationForm: React.FC<MoreInformationFormProps> = ({ job, onSave, 
     try {
       const updatedJobFields: Partial<Job> = {
         jobDemand: jobDemand,
-        machineId: selectedMachine.id,
+        machineId: selectedMachine?.id || null,
       };
 
       const jobPlanningPayload = {
@@ -73,7 +110,7 @@ const MoreInformationForm: React.FC<MoreInformationFormProps> = ({ job, onSave, 
           stepNo: step.stepNo,
           stepName: step.stepName,
           // Use selectedMachine's description or machineCode for machineDetail
-          machineDetail: selectedMachine.description || selectedMachine.machineCode,
+          machineDetail: selectedMachine?.description || selectedMachine?.machineCode || 'Not Assigned',
         })),
       };
 
@@ -105,24 +142,50 @@ const MoreInformationForm: React.FC<MoreInformationFormProps> = ({ job, onSave, 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Select Demand</label>
             <div
-              className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-white flex justify-between items-center ${isReadOnly ? 'bg-gray-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`w-full px-3 py-2 border-2 rounded-md flex justify-between items-center transition-all duration-200 ${
+                isReadOnly ? 'bg-gray-50 cursor-not-allowed' : 'cursor-pointer hover:scale-105'
+              } ${getDemandStyling(jobDemand)}`}
               onClick={() => !isReadOnly && setShowDemandModal(true)}
             >
-              <span>{jobDemand || 'Choose Demand Level'}</span>
+              <span className="font-medium">{getDemandDisplayLabel(jobDemand)}</span>
               <span>&#9660;</span>
             </div>
+            
+            {/* Demand-specific info */}
+            {jobDemand === 'high' && (
+              <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded text-xs text-red-700">
+                <strong>Urgent:</strong> Flexible machine assignment - not all machines required
+              </div>
+            )}
+            {jobDemand === 'medium' && (
+              <div className="mt-2 p-2 bg-[#00AEEF]/20 border border-[#00AEEF]/30 rounded text-xs text-[#00AEEF]">
+                <strong>Regular:</strong> Machine assignment is mandatory for all selected steps
+              </div>
+            )}
           </div>
 
           {/* Add Steps */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Add Steps</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Add Steps {jobDemand === 'medium' && <span className="text-red-500">*</span>}
+            </label>
             <div
-              className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-white flex justify-between items-center ${isReadOnly ? 'bg-gray-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-white flex justify-between items-center ${
+                isReadOnly ? 'bg-gray-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
               onClick={() => !isReadOnly && setShowStepsModal(true)}
             >
               <span>{selectedSteps.length > 0 ? `${selectedSteps.length} step(s) selected` : 'Choose the steps of the job'}</span>
               <span>&#9660;</span>
             </div>
+            
+            {/* Steps requirement info */}
+            {jobDemand === 'medium' && (
+              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                <strong>Required:</strong> All selected steps must have machine assignments for Regular demand
+              </div>
+            )}
+            
             <div className="flex flex-wrap gap-2 mt-2">
               {selectedSteps.map(step => (
                 <span key={step.stepName} className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
@@ -134,14 +197,25 @@ const MoreInformationForm: React.FC<MoreInformationFormProps> = ({ job, onSave, 
 
           {/* Machine Assigned */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Machine Assigned</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Machine Assigned {jobDemand === 'medium' && <span className="text-red-500">*</span>}
+            </label>
             <div
-              className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-white flex justify-between items-center ${isReadOnly ? 'bg-gray-50 cursor-not-allowed' : 'cursor-pointer'}`}
+              className={`w-full px-3 py-2 border border-gray-300 rounded-md bg-white flex justify-between items-center ${
+                isReadOnly ? 'bg-gray-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
               onClick={() => !isReadOnly && setShowMachineModal(true)}
             >
               <span>{selectedMachine ? selectedMachine.description || selectedMachine.machineCode : 'Select Machine'}</span>
               <span>&#9660;</span>
             </div>
+            
+            {/* Machine requirement info */}
+            {jobDemand === 'medium' && (
+              <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                <strong>Required:</strong> Machine assignment is mandatory for Regular demand
+              </div>
+            )}
           </div>
 
           <button
