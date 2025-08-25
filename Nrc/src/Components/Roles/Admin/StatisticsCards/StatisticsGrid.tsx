@@ -14,6 +14,8 @@ interface StatisticsGridProps {
   className?: string;
   onTotalJobsClick?: () => void;
   onCompletedJobsClick?: () => void;
+  onInProgressJobsClick?: () => void;
+  onPlannedJobsClick?: () => void;
 }
 
 const StatisticsGrid: React.FC<StatisticsGridProps> = ({
@@ -27,7 +29,9 @@ const StatisticsGrid: React.FC<StatisticsGridProps> = ({
   efficiency,
   className = '',
   onTotalJobsClick,
-  onCompletedJobsClick
+  onCompletedJobsClick,
+  onInProgressJobsClick,
+  onPlannedJobsClick
 }) => {
   const stats = [
     {
@@ -56,7 +60,9 @@ const StatisticsGrid: React.FC<StatisticsGridProps> = ({
       icon: PlayCircle,
       iconColor: 'text-[#F59E0B]',
       iconBgColor: 'bg-yellow-100',
-      borderColor: 'border-[#F59E0B]'
+      borderColor: 'border-[#F59E0B]',
+      onClick: onInProgressJobsClick,
+      isClickable: !!onInProgressJobsClick
     },
     {
       title: 'Planned Jobs',
@@ -64,7 +70,9 @@ const StatisticsGrid: React.FC<StatisticsGridProps> = ({
       icon: Clock,
       iconColor: 'text-[#6B7280]',
       iconBgColor: 'bg-gray-100',
-      borderColor: 'border-[#6B7280]'
+      borderColor: 'border-[#6B7280]',
+      onClick: onPlannedJobsClick,
+      isClickable: !!onPlannedJobsClick
     },
     // {
     //   title: 'Total Steps',

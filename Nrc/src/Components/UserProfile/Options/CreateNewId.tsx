@@ -8,10 +8,11 @@ interface CreateNewIdProps {
 }
 
 const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
+  console.log('Available role options:', roleOptions);
+  
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
-    phone: "",
     email: "",
     password: "",
   });
@@ -26,11 +27,14 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
   };
 
   const handleRoleToggle = (roleValue: string) => {
-    setSelectedRoles(prev => 
-      prev.includes(roleValue)
+    console.log('Role toggle clicked:', roleValue);
+    setSelectedRoles(prev => {
+      const newRoles = prev.includes(roleValue)
         ? prev.filter(role => role !== roleValue)
-        : [...prev, roleValue]
-    );
+        : [...prev, roleValue];
+      console.log('Updated selected roles:', newRoles);
+      return newRoles;
+    });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -45,6 +49,9 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
+      console.log('Form data:', form);
+      console.log('Selected roles before payload:', selectedRoles);
+      
       const payload: CreateUserPayload = {
         email: form.email,
         password: form.password,
@@ -52,11 +59,14 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
         firstName: form.firstName,
         lastName: form.lastName,
       };
+      
+      console.log('Final payload being sent to backend:', payload);
+      console.log('Payload JSON stringified:', JSON.stringify(payload));
 
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/add-member', {
+      const response = await fetch('https://nrc-backend-his4.onrender.com/api/auth/add-member', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -148,18 +158,7 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
               />
             </div>
 
-            {/* Phone Number */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={form.phone}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                required
-              />
-            </div>
+
 
             {/* Email */}
             <div>

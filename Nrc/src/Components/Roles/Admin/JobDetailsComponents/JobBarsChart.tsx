@@ -205,12 +205,11 @@ const JobBarsChart: React.FC<JobBarsChartProps> = ({
                     <p>Completed: {new Date(job.completedAt).toLocaleDateString()}</p>
                   )}
                 </div>
-                {'totalDuration' in job && job.totalDuration && (
-                  <p>Duration: {job.totalDuration} days</p>
+                {'totalDuration' in job && (job as any).totalDuration && (
+                  <p>Duration: {(job as any).totalDuration} days</p>
                 )}
               </div>
             </div>
-            
             {/* Progress indicator for in-progress jobs */}
             {category === 'inProgress' && getSteps(job) && (
               <div className="mt-2">

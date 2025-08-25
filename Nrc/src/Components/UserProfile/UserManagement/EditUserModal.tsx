@@ -12,7 +12,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
   const [form, setForm] = useState({
     name: user.name,
     email: user.email,
-    phone: user.phone || '',
   });
 
   const [selectedRoles, setSelectedRoles] = useState<string[]>(user.roles);
@@ -47,7 +46,6 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
       const payload: UpdateUserPayload = {
         name: form.name,
         email: form.email,
-        phone: form.phone,
         roles: selectedRoles,
       };
 
@@ -59,7 +57,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/users/${user.id}`, {
+      const response = await fetch(`https://nrc-backend-his4.onrender.com/api/auth/users/${user.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -145,17 +143,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess 
               />
             </div>
 
-            {/* Phone Number */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
-              <input
-                type="tel"
-                name="phone"
-                value={form.phone}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-              />
-            </div>
+
 
             {/* Role Selection */}
             <div>

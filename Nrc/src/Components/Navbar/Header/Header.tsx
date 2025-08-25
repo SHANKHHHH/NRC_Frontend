@@ -283,9 +283,11 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
       )}
 
       {showUserDetails && (
-        <UserDetailsPage
-          onClose={() => setShowUserDetails(false)}
-        />
+        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+          <UserDetailsPage
+            onClose={() => setShowUserDetails(false)}
+          />
+        </div>
       )}
     </header>
   );

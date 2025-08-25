@@ -20,7 +20,7 @@ const DeleteWarningModal: React.FC<DeleteWarningModalProps> = ({ user, onClose, 
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/users/${user.id}`, {
+      const response = await fetch(`https://nrc-backend-his4.onrender.com/api/auth/users/${user.id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${accessToken}`,

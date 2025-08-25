@@ -21,7 +21,7 @@ UserManagement/
 
 ### 1. **Create New ID** (`CreateNewId.tsx`)
 - **Location**: `../Options/CreateNewId.tsx`
-- **API Endpoint**: `POST http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/add-member`
+- **API Endpoint**: `POST https://nrc-backend-his4.onrender.com/api/auth/add-member`
 - **Payload Format**:
   ```typescript
   {
@@ -40,7 +40,7 @@ UserManagement/
   - Success message and auto-close
 
 ### 2. **User Details Page** (`UserDetailsPage.tsx`)
-- **API Endpoint**: `GET http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/users`
+- **API Endpoint**: `GET https://nrc-backend-his4.onrender.com/api/auth/users`
 - **Features**:
   - Displays all users in responsive card format
   - Search functionality (by ID, Name, or Email)
@@ -55,7 +55,7 @@ UserManagement/
   - Responsive design with proper spacing
 
 ### 4. **Edit User Modal** (`EditUserModal.tsx`)
-- **API Endpoint**: `PUT http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/users/{id}`
+- **API Endpoint**: `PUT https://nrc-backend-his4.onrender.com/api/auth/users/{id}`
 - **Payload Format**:
   ```typescript
   {
@@ -73,7 +73,7 @@ UserManagement/
   - Form validation and error handling
 
 ### 5. **Delete Warning Modal** (`DeleteWarningModal.tsx`)
-- **API Endpoint**: `DELETE http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/users/{id}`
+- **API Endpoint**: `DELETE https://nrc-backend-his4.onrender.com/api/auth/users/{id}`
 - **Features**:
   - Clear warning message about permanent deletion
   - User details display for confirmation

@@ -10,6 +10,8 @@ const ProductionUpdate = lazy(() => import('../../Components/Roles/Admin/Product
 const DispatchOverview = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchOverview'));
 const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchSummary'));
 const AdminDashboard = lazy(() => import('../../Components/Roles/Admin/AdminDashboard.tsx'));
+const InProgressJobs = lazy(() => import('../../Components/Roles/Admin/InProgressJobs'));
+const PlannedJobs = lazy(() => import('../../Components/Roles/Admin/PlannedJobs'));
 import PrintingMgrJobCard from '../../Components/Roles/PrintingMgr/job'; // Renamed import to avoid conflict
 import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
 import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';

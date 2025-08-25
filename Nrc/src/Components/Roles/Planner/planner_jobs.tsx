@@ -148,7 +148,7 @@ const PlannerJobs: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/purchase-orders', {
+      const response = await fetch('https://nrc-backend-his4.onrender.com/api/purchase-orders', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -195,7 +195,7 @@ const PlannerJobs: React.FC = () => {
         throw new Error('Authentication token not found. Please log in.');
       }
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs', {
+      const response = await fetch('https://nrc-backend-his4.onrender.com/api/jobs', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

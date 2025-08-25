@@ -25,30 +25,37 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ onClose }) => {
   // Fetch all users
   const fetchUsers = async () => {
     try {
+      console.log('Fetching users...');
       setLoading(true);
       setError(null);
 
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/users', {
+      console.log('Making API call to fetch users...');
+      const response = await fetch('https://nrc-backend-his4.onrender.com/api/auth/users', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
         },
       });
 
+      console.log('API response status:', response.status);
       if (!response.ok) {
         throw new Error(`Failed to fetch users: ${response.status}`);
       }
 
       const result = await response.json();
+      console.log('API response result:', result);
+      
       if (result.success && Array.isArray(result.data)) {
+        console.log('Setting users data:', result.data);
         setUsers(result.data);
         setFilteredUsers(result.data);
       } else {
         throw new Error('Invalid API response format');
       }
     } catch (err) {
+      console.error('Error fetching users:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch users');
     } finally {
       setLoading(false);
@@ -61,17 +68,37 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ onClose }) => {
 
   // Search functionality
   useEffect(() => {
+    console.log('Search effect triggered:', { searchTerm, usersCount: users.length });
+    
     if (!searchTerm.trim()) {
+      console.log('Empty search term, showing all users');
       setFilteredUsers(users);
       return;
     }
 
-    const filtered = users.filter(user => 
-      user.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredUsers(filtered);
+    try {
+      const filtered = users.filter(user => {
+        const searchLower = searchTerm.toLowerCase();
+        const matchesId = user.id?.toLowerCase().includes(searchLower);
+        const matchesName = user.name?.toLowerCase().includes(searchLower);
+        const matchesEmail = user.email?.toLowerCase().includes(searchLower);
+        
+        return matchesId || matchesName || matchesEmail;
+      });
+      
+      console.log('Search results:', { 
+        searchTerm, 
+        totalUsers: users.length, 
+        filteredCount: filtered.length,
+        filteredUsers: filtered 
+      });
+      
+      setFilteredUsers(filtered);
+    } catch (error) {
+      console.error('Error during search:', error);
+      // Fallback to showing all users if search fails
+      setFilteredUsers(users);
+    }
   }, [searchTerm, users]);
 
   // Handle user actions
@@ -106,7 +133,7 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ onClose }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="bg-gray-50 flex items-center justify-center py-20">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading users...</p>
@@ -115,8 +142,30 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ onClose }) => {
     );
   }
 
+  // Safety check to prevent crashes
+  if (!Array.isArray(users) || !Array.isArray(filteredUsers)) {
+    console.error('Users data is not in expected format:', { users, filteredUsers });
+    return (
+      <div className="bg-gray-50 w-full">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="text-center py-20">
+            <div className="text-red-600 text-6xl mb-4">⚠️</div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">Data Error</h2>
+            <p className="text-gray-600 mb-4">There was an issue loading the user data.</p>
+            <button
+              onClick={fetchUsers}
+              className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="bg-gray-50 w-full">
       <div className="max-w-7xl mx-auto px-4 py-8">
         
         {/* Header */}
@@ -130,7 +179,7 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ onClose }) => {
             </svg>
             <span>Back</span>
           </button>
-          <h1 className="text-3xl font-bold text-gray-800">All Login IDs</h1>
+         
         </div>
 
         {/* Search Bar */}
@@ -153,6 +202,8 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ onClose }) => {
             {error}
           </div>
         )}
+
+
 
         {/* Users Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

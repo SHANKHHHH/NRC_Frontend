@@ -56,11 +56,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({ user, onClose, onEd
               <p className="text-gray-900">{user.email}</p>
             </div>
 
-            {/* Phone */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-              <p className="text-gray-900">{user.phone || 'Not Available'}</p>
-            </div>
+
 
             {/* Roles */}
             <div>

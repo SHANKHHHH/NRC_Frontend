@@ -10,6 +10,8 @@ const JobInitiationForm = lazy(() => import('./Components/Roles/Planner/Form/Job
 const JobStepsView = lazy(() => import('./Components/Roles/Planner/Form/JobStepsView')); // IMPORTED: New component
 const JobDetailsContainer = lazy(() => import('./Components/Roles/Admin/JobDetailsComponents/JobDetailsContainer')); // New job details page
 const CompletedJobsView = lazy(() => import('./Components/Roles/Admin/CompletedJobsView')); // New completed jobs view
+const InProgressJobs = lazy(() => import('./Components/Roles/Admin/InProgressJobs')); // New in-progress jobs view
+const PlannedJobs = lazy(() => import('./Components/Roles/Admin/PlannedJobs')); // New planned jobs view
 const EditMachinePage = lazy(() => import('./Components/Roles/Planner/EditMachinePage')); // NEW: Edit Machine page
 const UserDetailsPage = lazy(() => import('./Components/UserProfile/UserManagement/UserDetailsPage')); // NEW: User Details page
 
@@ -86,6 +88,20 @@ function AppContent() {
                 path="completed-jobs" // New route for completed jobs
                 element={
                   <CompletedJobsView />
+                }
+              />
+              {/* Nested Route for InProgressJobs */}
+              <Route
+                path="in-progress-jobs" // New route for in-progress jobs
+                element={
+                  <InProgressJobs />
+                }
+              />
+              {/* Nested Route for PlannedJobs */}
+              <Route
+                path="planned-jobs" // New route for planned jobs
+                element={
+                  <PlannedJobs />
                 }
               />
               {/* Nested Route for EditMachinePage */}

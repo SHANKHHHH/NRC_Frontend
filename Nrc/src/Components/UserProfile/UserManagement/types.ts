@@ -7,7 +7,6 @@ export interface UserData {
   lastLogin: string;
   createdAt: string;
   updatedAt: string;
-  phone?: string;
 }
 
 export interface CreateUserPayload {
@@ -21,7 +20,6 @@ export interface CreateUserPayload {
 export interface UpdateUserPayload {
   name: string;
   email: string;
-  phone?: string;
   roles: string[];
   password?: string;
 }
