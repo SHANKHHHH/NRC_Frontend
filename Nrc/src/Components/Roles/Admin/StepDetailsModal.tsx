@@ -53,6 +53,7 @@ interface StepDetailsModalProps {
   onClose: () => void;
   onUpdateStatus: (step: JobStep) => void;
   onEditMachine: (step: JobStep) => void;
+  onViewDetails: (step: JobStep) => void;
 }
 
 const StepDetailsModal: React.FC<StepDetailsModalProps> = ({
@@ -60,7 +61,8 @@ const StepDetailsModal: React.FC<StepDetailsModalProps> = ({
   stepDetails,
   onClose,
   onUpdateStatus,
-  onEditMachine
+  onEditMachine,
+  onViewDetails
 }) => {
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -192,19 +194,25 @@ const StepDetailsModal: React.FC<StepDetailsModalProps> = ({
                   )}
 
                   {/* Action Buttons */}
-                  <div className="flex space-x-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <button
                       onClick={() => onUpdateStatus(step)}
-                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2"
+                      className="bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center space-x-2 text-sm"
                     >
                       <span>Update Status</span>
                     </button>
                     <button
                       onClick={() => onEditMachine(step)}
-                      className="flex-1 bg-orange-600 text-white px-4 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center space-x-2"
+                      className="bg-orange-600 text-white px-3 py-2 rounded-lg hover:bg-orange-700 transition-colors flex items-center justify-center space-x-2 text-sm"
                     >
                       <WrenchScrewdriverIcon className="h-4 w-4" />
                       <span>Edit Machine</span>
+                    </button>
+                    <button
+                      onClick={() => onViewDetails(step)}
+                      className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center space-x-2 text-sm"
+                    >
+                      <span>View Details</span>
                     </button>
                   </div>
                 </div>

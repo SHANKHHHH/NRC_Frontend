@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronDownIcon, ClockIcon, ArrowPathIcon, UserIcon, PlayIcon, StopIcon } from '@heroicons/react/24/outline';
+import { ChevronDownIcon, ClockIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import StepDetailsModal from './StepDetailsModal';
 import UpdateStatusModal from './UpdateStatusModal';
 import EditMachineModal from './EditMachineModal';
+import ViewDetailsModal from './ViewDetailsModal';
+import EditDetailsModal from './EditDetailsModal';
 
 interface MachineDetail {
   unit: string | null;
@@ -59,8 +61,12 @@ const EditWorkingDetails: React.FC = () => {
   const [showStepDetailsModal, setShowStepDetailsModal] = useState(false);
   const [showUpdateStatusModal, setShowUpdateStatusModal] = useState(false);
   const [showEditMachineModal, setShowEditMachineModal] = useState(false);
+  const [showViewDetailsModal, setShowViewDetailsModal] = useState(false);
+  const [showEditDetailsModal, setShowEditDetailsModal] = useState(false);
   const [selectedStep, setSelectedStep] = useState<JobStep | null>(null);
   const [stepDetails, setStepDetails] = useState<StepDetails>({});
+  const [selectedStepData, setSelectedStepData] = useState<any>(null);
+  const [selectedStepName, setSelectedStepName] = useState<string>('');
 
   // Debug logging
   console.log('EditWorkingDetails component rendered');
@@ -167,6 +173,133 @@ const EditWorkingDetails: React.FC = () => {
     setShowEditMachineModal(true);
   };
 
+  const handleViewDetails = async (step: JobStep) => {
+    try {
+      setSelectedStep(step);
+      setSelectedStepName(step.stepName);
+      
+      // Map step names to API endpoints
+      const stepTypeMap: { [key: string]: string } = {
+        'PaperStore': 'paper-store',
+        'PrintingDetails': 'printing-details',
+        'Corrugation': 'corrugation',
+        'FluteLaminateBoardConversion': 'flute-laminate-board-conversion',
+        'Punching': 'punching',
+        'SideFlapPasting': 'side-flap-pasting',
+        'QualityDept': 'quality-dept',
+        'DispatchProcess': 'dispatch-process'
+      };
+
+      const stepType = stepTypeMap[step.stepName];
+      if (!stepType) {
+        console.error('Unknown step type:', step.stepName);
+        return;
+      }
+
+      const accessToken = localStorage.getItem('accessToken');
+      const apiUrl = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/${stepType}/by-job/${encodeURIComponent(selectedJob!.nrcJobNo)}`;
+      console.log('🔍 Fetching from URL:', apiUrl);
+      console.log('🔍 Job NRC:', selectedJob!.nrcJobNo);
+      console.log('🔍 Encoded Job NRC:', encodeURIComponent(selectedJob!.nrcJobNo));
+      
+      const response = await fetch(apiUrl, {
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.success && result.data && result.data.length > 0) {
+          setSelectedStepData(result.data[0]);
+          setShowViewDetailsModal(true);
+        } else {
+          console.error('No data found for step:', step.stepName);
+          alert(`No data found for ${step.stepName} step`);
+        }
+      } else {
+        console.error('Failed to fetch step details:', response.status, response.statusText);
+        alert(`Failed to fetch ${step.stepName} details: ${response.status} ${response.statusText}`);
+      }
+    } catch (err) {
+      console.error('Error fetching step details:', err);
+      alert(`Error fetching ${step.stepName} details: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    }
+  };
+
+  const handleEditDetails = () => {
+    setShowViewDetailsModal(false);
+    setShowEditDetailsModal(true);
+  };
+
+  const handleUpdateDetails = async (updatedData: any) => {
+    try {
+      // Map step names to API endpoints
+      const stepTypeMap: { [key: string]: string } = {
+        'PaperStore': 'paper-store',
+        'PrintingDetails': 'printing-details',
+        'Corrugation': 'corrugation',
+        'FluteLaminateBoardConversion': 'flute-laminate-board-conversion',
+        'Punching': 'punching',
+        'SideFlapPasting': 'side-flap-pasting',
+        'QualityDept': 'quality-dept',
+        'DispatchProcess': 'dispatch-process'
+      };
+
+      const stepType = stepTypeMap[selectedStepName];
+      if (!stepType) {
+        throw new Error('Unknown step type');
+      }
+
+      const accessToken = localStorage.getItem('accessToken');
+      
+      // Try the ALB URL first, then fallback to onrender.com
+      let putUrl = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/${stepType}/${encodeURIComponent(updatedData.jobNrcJobNo)}`;
+      let response = await fetch(putUrl, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      // If ALB fails, try onrender.com
+      if (!response.ok) {
+        console.log('🔍 ALB PUT failed, trying onrender.com...');
+        putUrl = `https://nrc-backend-his4.onrender.com/api/${stepType}/${encodeURIComponent(updatedData.jobNrcJobNo)}`;
+        console.log('🔍 PUT request to onrender.com URL:', putUrl);
+        
+        response = await fetch(putUrl, {
+          method: 'PUT',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(updatedData)
+        });
+      }
+      
+      console.log('🔍 PUT request to URL:', putUrl);
+      console.log('🔍 PUT payload:', updatedData);
+      console.log('🔍 Step Type:', stepType);
+      console.log('🔍 Job NRC:', updatedData.jobNrcJobNo);
+      console.log('🔍 Encoded Job NRC:', encodeURIComponent(updatedData.jobNrcJobNo));
+      
+      if (!response.ok) {
+        throw new Error(`Failed to update: ${response.status}`);
+      }
+
+      // Refresh the data
+      await fetchStepDetails(selectedJob!.nrcJobNo);
+      setShowEditDetailsModal(false);
+    } catch (err) {
+      console.error('Error updating step details:', err);
+      throw err;
+    }
+  };
+
   const getPriorityColor = (priority: string | null) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-800';
@@ -176,14 +309,7 @@ const EditWorkingDetails: React.FC = () => {
     }
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'start': return 'bg-green-100 text-green-800';
-      case 'stop': return 'bg-red-100 text-red-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
+
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -297,6 +423,7 @@ const EditWorkingDetails: React.FC = () => {
           onClose={() => setShowStepDetailsModal(false)}
           onUpdateStatus={handleUpdateStatus}
           onEditMachine={handleEditMachine}
+          onViewDetails={handleViewDetails}
         />
       )}
 
@@ -317,6 +444,28 @@ const EditWorkingDetails: React.FC = () => {
           job={selectedJob as any} // Type cast to avoid type mismatch 
           onClose={() => setShowEditMachineModal(false)}
           onUpdate={fetchJobs}
+        />
+      )}
+
+      {/* View Details Modal */}
+      {showViewDetailsModal && selectedStepData && (
+        <ViewDetailsModal
+          isOpen={showViewDetailsModal}
+          onClose={() => setShowViewDetailsModal(false)}
+          stepName={selectedStepName}
+          stepData={selectedStepData}
+          onEditDetails={handleEditDetails}
+        />
+      )}
+
+      {/* Edit Details Modal */}
+      {showEditDetailsModal && selectedStepData && (
+        <EditDetailsModal
+          isOpen={showEditDetailsModal}
+          onClose={() => setShowEditDetailsModal(false)}
+          stepName={selectedStepName}
+          stepData={selectedStepData}
+          onUpdate={handleUpdateDetails}
         />
       )}
     </div>
