@@ -1,115 +1,143 @@
 // src/Components/Roles/Planner/PODetailsForm.tsx
-import React, { useState } from 'react';
-import {type Job, type PoDetailsPayload } from '../Types/job.ts'; // Added 'type' keyword for PoDetailsPayload
+import React, { useState, useEffect } from 'react';
+import {type Job, type PoDetailsPayload } from '../Types/job.ts';
 
 interface PODetailsFormProps {
   job: Job;
-  onSave: (poDetails: PoDetailsPayload) => Promise<void>; // Use PoDetailsPayload type
+  onSave: (poDetails: PoDetailsPayload) => Promise<void>;
   onClose: () => void;
   onNext: () => void;
-  isReadOnly: boolean; // ADDED: New prop
+  isReadOnly: boolean;
 }
 
 const PODetailsForm: React.FC<PODetailsFormProps> = ({ job, onSave, onClose, onNext, isReadOnly }) => {
   const toDateInput = (isoDateString: string | null | undefined) => {
     if (!isoDateString) return '';
     try {
-      return new Date(isoDateString).toISOString().split('T')[0];
+      const date = new Date(isoDateString);
+      if (isNaN(date.getTime())) {
+        return '';
+      }
+      return date.toISOString().split('T')[0];
     } catch {
       return '';
     }
   };
 
-  const [poData, setPoData] = useState<Omit<PoDetailsPayload, 'nrcJobNo'>>({ // Omit nrcJobNo as it's added later
-    boardSize: job.boxDimensions || '', // Assuming job.boxDimensions maps to boardSize
-    customer: job.customerName || '',
-    deliveryDate: toDateInput(job.deliveryDate),
-    dieCode: job.diePunchCode || 0, // Default to 0 for numbers
-    dispatchDate: toDateInput(job.dispatchDate),
-    dispatchQuantity: job.dispatchQuantity || 0,
-    fluteType: job.fluteType || '',
-    jockeyMonth: '',
-    noOfUps: Number(job.noUps) || 0, // Convert job.noUps (string|null) to number
-    nrcDeliveryDate: toDateInput(job.nrcDeliveryDate),
-    noOfSheets: job.noOfSheets || 0,
-    poDate: toDateInput(job.poDate),
+  const toISOString = (dateString: string | null) => {
+    if (!dateString) return null;
+    try {
+      return new Date(dateString + 'T00:00:00.000Z').toISOString();
+    } catch {
+      return null;
+    }
+  };
+
+  // Simplified state with only the required fields
+  const [poData, setPoData] = useState({
+    poDate: toDateInput(job.poDate) || new Date().toISOString().split('T')[0], // Default to today
     poNumber: job.poNumber || '',
-    pendingQuantity: job.pendingQuantity || 0,
-    pendingValidity: 0,
-    plant: job.plant || '',
-    shadeCardApprovalDate: toDateInput(job.shadeCardApprovalDate), // From main job
-    srNo: job.srNo || 0, // From main job
-    style: job.styleItemSKU || '', // Assuming job.styleItemSKU maps to style
+    deliveryDate: toDateInput(job.deliveryDate) || '',
     totalPOQuantity: job.totalPOQuantity || 0,
-    unit: job.unit || '',
+    unit: job.unit || '', // This maps to "Location" in UI
+    noOfUps: Number(job.noUps) || 1, // For calculation
   });
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Auto-calculate Number of Sheets
+  const calculatedNoOfSheets = poData.totalPOQuantity > 0 && poData.noOfUps > 0 
+    ? Math.ceil(poData.totalPOQuantity / poData.noOfUps) 
+    : 0;
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    if (isReadOnly) return; // Prevent changes if read-only
+    if (isReadOnly) {
+      console.log('[PODetailsForm] Read-only mode - change prevented for field:', e.target.name);
+      return;
+    }
     const { name, value, type } = e.target;
     setPoData(prev => ({
       ...prev,
-      [name]: type === 'number' ? (value === '' ? '' : Number(value)) : value // Handle number inputs
+      [name]: type === 'number' ? (value === '' ? 0 : Number(value)) : value
     }));
+    console.log('[PODetailsForm] Field changed:', name, 'New value:', value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (isReadOnly) return; // Prevent submission if read-only
+    console.group('[PODetailsForm] Form submission started');
+    
+    if (isReadOnly) {
+      console.log('[PODetailsForm] Read-only mode - submission prevented');
+      console.groupEnd();
+      return;
+    }
 
+    console.log('[PODetailsForm] Current form data:', poData);
     setError(null);
     setIsSubmitting(true);
 
-    const requiredFields: Array<keyof typeof poData> = [
-      'poNumber', 'unit', 'plant', 'totalPOQuantity', 'dispatchQuantity',
-      'pendingQuantity', 'noOfSheets', 'poDate', 'deliveryDate', 'dispatchDate', 'nrcDeliveryDate',
-      'boardSize', 'customer', 'dieCode', 'fluteType', 'noOfUps', 'srNo', 'style' // Added other required fields from payload
-    ];
+    // Validate required fields
+    const requiredFields = ['poDate', 'poNumber', 'deliveryDate', 'totalPOQuantity', 'unit'];
     const missingFields = requiredFields.filter(field => {
-      const value = poData[field];
-      return value === null || value === '' || (typeof value === 'number' && isNaN(value));
+      const value = poData[field as keyof typeof poData];
+      return value === null || value === '' || (typeof value === 'number' && value === 0);
     });
 
     if (missingFields.length > 0) {
-      setError(`Please fill all required P.O. fields: ${missingFields.map(f => f.replace(/([A-Z])/g, ' $1').trim()).join(', ')}.`);
+      const errorMsg = `Please fill all required fields: ${missingFields.map(f => f.replace(/([A-Z])/g, ' $1').trim()).join(', ')}.`;
+      console.error('[PODetailsForm] Validation failed - missing fields:', missingFields);
+      setError(errorMsg);
       setIsSubmitting(false);
+      console.groupEnd();
       return;
     }
 
     try {
+      console.log('[PODetailsForm] Preparing payload...');
+      
+      // Create the full payload with all required backend fields
       const payload: PoDetailsPayload = {
         nrcJobNo: job.nrcJobNo,
-        boardSize: poData.boardSize,
-        customer: poData.customer,
-        deliveryDate: poData.deliveryDate,
-        dieCode: Number(poData.dieCode),
-        dispatchDate: poData.dispatchDate,
-        dispatchQuantity: Number(poData.dispatchQuantity),
-        fluteType: poData.fluteType,
-        jockeyMonth: poData.jockeyMonth || 'N/A',
-        noOfUps: Number(poData.noOfUps),
-        nrcDeliveryDate: poData.nrcDeliveryDate,
-        noOfSheets: Number(poData.noOfSheets),
-        poDate: poData.poDate,
+        boardSize: job.boxDimensions || '',
+        customer: job.customerName || '',
+        deliveryDate: toISOString(poData.deliveryDate) as string,
+        dieCode: job.diePunchCode || 0,
+        dispatchDate: toISOString(poData.poDate) as string, // Use PO date as dispatch date
+        dispatchQuantity: poData.totalPOQuantity, // Use total quantity as dispatch quantity
+        fluteType: job.fluteType || '',
+        jockeyMonth: new Date().toLocaleDateString('en-US', { month: 'long' }),
+        noOfUps: poData.noOfUps,
+        nrcDeliveryDate: toISOString(poData.deliveryDate) as string, // Use delivery date
+        noOfSheets: calculatedNoOfSheets,
+        poDate: toISOString(poData.poDate) as string,
         poNumber: poData.poNumber,
-        pendingQuantity: Number(poData.pendingQuantity),
-        pendingValidity: Number(poData.pendingValidity) || 0,
-        plant: poData.plant,
-        shadeCardApprovalDate: poData.shadeCardApprovalDate,
-        srNo: Number(poData.srNo),
-        style: poData.style,
-        totalPOQuantity: Number(poData.totalPOQuantity),
+        pendingQuantity: 0, // Set to 0 as it's not in the simplified form
+        pendingValidity: 30, // Default value
+        plant: 'Plant A', // Default value
+        shadeCardApprovalDate: job.shadeCardApprovalDate || new Date().toISOString(),
+        srNo: job.srNo || 1,
+        style: job.styleItemSKU || '',
+        totalPOQuantity: poData.totalPOQuantity,
         unit: poData.unit,
       };
+      
+      console.log('[PODetailsForm] Final payload:', payload);
+      console.log('[PODetailsForm] Calling onSave callback...');
+      
       await onSave(payload);
+      
+      console.log('[PODetailsForm] Save successful, proceeding to next step');
       onNext();
     } catch (err) {
-      setError(`Failed to save P.O. details: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      const errorMsg = `Failed to save P.O. details: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      console.error('[PODetailsForm] Submission error:', err);
+      setError(errorMsg);
     } finally {
+      console.log('[PODetailsForm] Submission process completed');
       setIsSubmitting(false);
+      console.groupEnd();
     }
   };
 
@@ -129,107 +157,101 @@ const PODetailsForm: React.FC<PODetailsFormProps> = ({ job, onSave, onClose, onN
         <form onSubmit={handleSubmit} className="w-full space-y-4">
           {error && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative text-sm mb-4">{error}</div>}
 
-          {/* P.O. Number */}
+          {/* PO Date */}
           <div>
-            <label htmlFor="poNumber" className="block text-sm font-medium text-gray-700 mb-1">P.O. Number</label>
-            <input type="text" id="poNumber" name="poNumber" value={poData.poNumber} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
+            <label htmlFor="poDate" className="block text-sm font-medium text-gray-700 mb-1">PO Date</label>
+            <input 
+              type="date" 
+              id="poDate" 
+              name="poDate" 
+              value={poData.poDate} 
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" 
+              required
               disabled={isReadOnly}
             />
           </div>
-          {/* Unit */}
+
+          {/* PO Number */}
           <div>
-            <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">Unit</label>
-            <input type="text" id="unit" name="unit" value={poData.unit} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
+            <label htmlFor="poNumber" className="block text-sm font-medium text-gray-700 mb-1">PO Number</label>
+            <input 
+              type="text" 
+              id="poNumber" 
+              name="poNumber" 
+              value={poData.poNumber} 
+              onChange={handleChange}
+              placeholder="#"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" 
+              required
               disabled={isReadOnly}
             />
           </div>
-          {/* Plant */}
-          <div>
-            <label htmlFor="plant" className="block text-sm font-medium text-gray-700 mb-1">Plant</label>
-            <input type="text" id="plant" name="plant" value={poData.plant} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
-              disabled={isReadOnly}
-            />
-          </div>
-          {/* Total P.O. Quantity */}
-          <div>
-            <label htmlFor="totalPOQuantity" className="block text-sm font-medium text-gray-700 mb-1">Total P.O. Quantity</label>
-            <input type="number" id="totalPOQuantity" name="totalPOQuantity" value={poData.totalPOQuantity} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
-              disabled={isReadOnly}
-            />
-          </div>
-          {/* Dispatch Quantity */}
-          <div>
-            <label htmlFor="dispatchQuantity" className="block text-sm font-medium text-gray-700 mb-1">Dispatch Quantity</label>
-            <input type="number" id="dispatchQuantity" name="dispatchQuantity" value={poData.dispatchQuantity} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
-              disabled={isReadOnly}
-            />
-          </div>
-          {/* Pending Quantity */}
-          <div>
-            <label htmlFor="pendingQuantity" className="block text-sm font-medium text-gray-700 mb-1">Pending Quantity</label>
-            <input type="number" id="pendingQuantity" name="pendingQuantity" value={poData.pendingQuantity} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
-              disabled={isReadOnly}
-            />
-          </div>
-          {/* No. of Sheets */}
-          <div>
-            <label htmlFor="noOfSheets" className="block text-sm font-medium text-gray-700 mb-1">No. of Sheets</label>
-            <input type="number" id="noOfSheets" name="noOfSheets" value={poData.noOfSheets} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
-              disabled={isReadOnly}
-            />
-          </div>
-          {/* P.O. Date */}
-          <div>
-            <label htmlFor="poDate" className="block text-sm font-medium text-gray-700 mb-1">P.O. Date</label>
-            <input type="date" id="poDate" name="poDate" value={poData.poDate} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
-              disabled={isReadOnly}
-            />
-          </div>
+
           {/* Delivery Date */}
           <div>
             <label htmlFor="deliveryDate" className="block text-sm font-medium text-gray-700 mb-1">Delivery Date</label>
-            <input type="date" id="deliveryDate" name="deliveryDate" value={poData.deliveryDate} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
-              disabled={isReadOnly}
-            />
-          </div>
-          {/* Dispatch Date */}
-          <div>
-            <label htmlFor="dispatchDate" className="block text-sm font-medium text-gray-700 mb-1">Dispatch Date</label>
-            <input type="date" id="dispatchDate" name="dispatchDate" value={poData.dispatchDate} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
-              disabled={isReadOnly}
-            />
-          </div>
-          {/* NRC Delivery Date */}
-          <div>
-            <label htmlFor="nrcDeliveryDate" className="block text-sm font-medium text-gray-700 mb-1">NRC Delivery Date</label>
-            <input type="date" id="nrcDeliveryDate" name="nrcDeliveryDate" value={poData.nrcDeliveryDate} onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" required
+            <input 
+              type="date" 
+              id="deliveryDate" 
+              name="deliveryDate" 
+              value={poData.deliveryDate} 
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" 
+              required
               disabled={isReadOnly}
             />
           </div>
 
-          {/* Hidden inputs for derived fields */}
-          <input type="hidden" name="boardSize" value={poData.boardSize} />
-          <input type="hidden" name="customer" value={poData.customer} />
-          <input type="hidden" name="dieCode" value={poData.dieCode} />
-          <input type="hidden" name="fluteType" value={poData.fluteType} />
-          <input type="hidden" name="jockeyMonth" value={poData.jockeyMonth} />
+          {/* Total PO Quantity */}
+          <div>
+            <label htmlFor="totalPOQuantity" className="block text-sm font-medium text-gray-700 mb-1">Total PO Quantity</label>
+            <input 
+              type="number" 
+              id="totalPOQuantity" 
+              name="totalPOQuantity" 
+              value={poData.totalPOQuantity} 
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" 
+              required
+              disabled={isReadOnly}
+            />
+          </div>
+
+          {/* Location (maps to unit) */}
+          <div>
+            <label htmlFor="unit" className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+            <input 
+              type="text" 
+              id="unit" 
+              name="unit" 
+              value={poData.unit} 
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF] disabled:bg-gray-50 disabled:cursor-not-allowed" 
+              required
+              disabled={isReadOnly}
+            />
+          </div>
+
+          {/* Number of Sheets (Auto-calculated) */}
+          <div>
+            <label htmlFor="noOfSheets" className="block text-sm font-medium text-gray-700 mb-1">Number of Sheets (Calculated)</label>
+            <input 
+              type="text" 
+              id="noOfSheets" 
+              name="noOfSheets" 
+              value={`Auto-calculated: ${calculatedNoOfSheets} sheets`}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-gray-600 cursor-not-allowed" 
+              disabled={true}
+              readOnly
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Formula: Total PO Quantity ÷ No. of Ups = {poData.totalPOQuantity} ÷ {poData.noOfUps} = {calculatedNoOfSheets}
+            </p>
+          </div>
+
+          {/* Hidden field for noOfUps to preserve the calculation */}
           <input type="hidden" name="noOfUps" value={poData.noOfUps} />
-          <input type="hidden" name="pendingValidity" value={poData.pendingValidity} />
-          <input type="hidden" name="shadeCardApprovalDate" value={poData.shadeCardApprovalDate} />
-          <input type="hidden" name="srNo" value={poData.srNo} />
-          <input type="hidden" name="style" value={poData.style} />
-
 
           <button
             type="submit"

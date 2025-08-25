@@ -14,11 +14,11 @@ const roleEndpoints: Record<string, string | undefined> = {
 };
 
 const mockData = [
-  { id: 1, name: "Liam Harper", role: "", phone: "9470763941" },
-  { id: 2, name: "Olivia Bennett", role: "", phone: "9470763941" },
-  { id: 3, name: "Noah Carter", role: "", phone: "9470763941" },
-  { id: 4, name: "Ava Mitchell", role: "", phone: "9470763941" },
-  { id: 5, name: "Ethan Parker", role: "", phone: "9470763941" },
+  { id: 1, name: "Liam Harper", role: "" },
+  { id: 2, name: "Olivia Bennett", role: "" },
+  { id: 3, name: "Noah Carter", role: "" },
+  { id: 4, name: "Ava Mitchell", role: "" },
+  { id: 5, name: "Ethan Parker", role: "" },
 ];
 
 interface ManageComponentProps {
@@ -79,7 +79,7 @@ const ManageComponent: React.FC<ManageComponentProps> = ({ role, onClose }) => {
                   <tr className="bg-white">
                     <th className="px-6 py-4 font-semibold text-gray-700 text-center">User</th>
                     <th className="px-6 py-4 font-semibold text-gray-700 text-center">Role</th>
-                    <th className="px-6 py-4 font-semibold text-gray-700 text-center">Phone No.</th>
+
                     <th className="px-6 py-4 font-semibold text-gray-700 text-center">Actions</th>
                   </tr>
                 </thead>
@@ -92,7 +92,7 @@ const ManageComponent: React.FC<ManageComponentProps> = ({ role, onClose }) => {
                           {user.role}
                         </span>
                       </td>
-                      <td className="px-6 py-4 align-middle text-center text-gray-900">{user.phone}</td>
+
                       <td className="px-6 py-4 align-middle text-center flex items-center justify-center gap-4">
                         <button className="text-[#00AEEF] font-semibold hover:underline focus:outline-none hover:cursor-pointer">Edit</button>
                         <button className="hover:opacity-70 focus:outline-none hover:cursor-pointer">

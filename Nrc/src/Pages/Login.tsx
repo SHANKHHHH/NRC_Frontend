@@ -72,6 +72,9 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
       // If login successful
       if (response.data.success) {
         setSubmitStatus("success");
+        
+        // Log the response for debugging
+        console.log('Login response:', response.data);
 
         // Store the access token in localStorage
         // IMPORTANT: Using 'acessToken' as per your backend response.
@@ -85,7 +88,15 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
 
         // Set authentication state and user role
         setIsAuthenticated(true);
-        setUserRole(userData.role);
+        
+        // Handle roles array from backend response
+        if (userData.roles && userData.roles.length > 0) {
+          setUserRole(userData.roles[0]); // Get first role from array
+          console.log('User role set to:', userData.roles[0]);
+        } else {
+          console.error('No roles found in user data:', userData);
+          setUserRole(null);
+        }
 
         // Clear form
         setFormData({ id: "", password: "", role: "planner" }); // Reset role to planner for consistency
@@ -192,20 +203,23 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
             <button
               type="button"
               onClick={() => {
-                // Simulate successful login with test data
+                // Simulate successful login with test data using correct payload structure
                 const testUserData = {
                   id: formData.role === "admin" ? "NRC001" : "NRC002",
                   userActive: true,
-                  role: formData.role
+                  roles: [formData.role] // Use the ACTUAL selected role from form
                 };
 
                 // Store test data in localStorage with the correct key 'accessToken'
-                // Using the new access token you provided
-                localStorage.setItem("accessToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ik5SQzAwMSIsImlhdCI6MTc1Mzc2NjY5MSwiZXhwIjoxNzU2MzU4NjkxfQ.b1Zx7WouiL9EALehVM8xLs2RO55u9FqfvKo1n0Jg6cY");
+                localStorage.setItem("accessToken", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6Ik5SQzAwMSIsImlhdCI6MTc1NTk0NjI4MiwiZXhwIjoxNzU4NTM4MjgyfQ.x96Yh3gBmDv1tcKxXBGQK2tAExAwMfuYyVvqZsg2Q3s");
                 localStorage.setItem("userData", JSON.stringify(testUserData));
 
                 setIsAuthenticated(true);
-                setUserRole(formData.role);
+                
+                // Use the ACTUAL selected role, not the backend response
+                setUserRole(formData.role); // This will use "planner" when you select planner
+                console.log('Test login - User role set to:', formData.role);
+                
                 navigate('/dashboard');
               }}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg transition duration-300 hover:cursor-pointer"

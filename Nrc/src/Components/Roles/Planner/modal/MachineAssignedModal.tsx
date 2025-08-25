@@ -1,6 +1,6 @@
 // src/Components/Roles/Planner/MachineAssignedModal.tsx
 import React, { useState, useEffect } from 'react';
-import {type  Machine } from '../Types/job.ts'; // Adjust path as needed
+import {type Machine } from '../Types/job.ts'; // Adjust path as needed
 
 interface MachineAssignedModalProps {
   currentMachine: Machine | null;

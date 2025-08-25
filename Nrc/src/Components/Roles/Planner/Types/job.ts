@@ -6,7 +6,15 @@ export interface JobStep {
   machineDetail: string; // This is the description/name of the machine assigned to this step
 }
 
+export interface MachineDetailInStep { // For machineDetails array in JobPlanStep
+  id: string;
+  unit: string | null;
+  machineCode: string | null;
+  machineType: string;
+}
+
 export interface Machine {
+  machineType: 'inside Machine' | 'PaperStore' | 'QualityDept' | 'DispatchProcess' | 'Not Editable';
   id: string; // Machine ID (e.g., A007)
   unit: string;
   machineCode: string;
@@ -21,30 +29,193 @@ export interface Machine {
   jobs: any[]; // Assuming jobs array can contain various types, or specific job IDs
 }
 
-// Interface for the P.O. details that will be sent to /api/purchase-orders/create
 export interface PoDetailsPayload {
-  nrcJobNo: string; // Added for linking PO to Job on backend
+  nrcJobNo: string;
   boardSize: string;
   customer: string;
-  deliveryDate: string; // ISO string
+  deliveryDate: string;
   dieCode: number;
-  dispatchDate: string; // ISO string
+  dispatchDate: string;
   dispatchQuantity: number;
   fluteType: string;
-  jockeyMonth: string; // Defaulted to ""
+  jockeyMonth: string;
   noOfUps: number;
-  nrcDeliveryDate: string; // ISO string
+  nrcDeliveryDate: string;
   noOfSheets: number;
-  poDate: string; // ISO string
+  poDate: string;
   poNumber: string;
   pendingQuantity: number;
-  pendingValidity: number; // Defaulted to 0
+  pendingValidity: number;
   plant: string;
-  shadeCardApprovalDate: string; // ISO string
-  srNo: number; // PO's internal SR No
+  shadeCardApprovalDate: string;
+  srNo: number;
   style: string;
   totalPOQuantity: number;
   unit: string;
+}
+
+// NEW/UPDATED INTERFACES FOR STEP-SPECIFIC PAYLOADS (for PUT requests on completion)
+export interface PaperStorePayload {
+  id?: number;
+  jobStepId: number;
+  jobNrcJobNo: string;
+  status: 'in_progress' | 'accept';
+  sheetSize: string;
+  quantity: number;
+  available: number;
+  issuedDate: string; // ISO string
+  mill: string;
+  extraMargin: string;
+  gsm: string;
+  quality: string;
+}
+
+export interface CorrugationPayload {
+  id?: number;
+  jobStepId: number;
+  jobNrcJobNo: string;
+  status: 'in_progress' | 'accept';
+  date: string; // ISO string
+  shift: string;
+  oprName: string;
+  machineNo: string;
+  noOfSheets: number;
+  size: string;
+  gsm1: string;
+  gsm2: string;
+  flute: string;
+  remarks: string;
+  qcCheckSignBy: string;
+}
+
+export interface PrintingDetailsPayload {
+  id?: number;
+  jobStepId: number;
+  jobNrcJobNo: string;
+  status: 'in_progress' | 'accept';
+  date: string; // ISO string
+  shift: string;
+  oprName: string; // From "Operator Name"
+  noOfColours: number;
+  inksUsed: string;
+  postPrintingFinishingOkQty: number;
+  wastage: number; // From "Wastage"
+  coatingType: string;
+  separateSheets: number;
+  extraSheets: number;
+  machine: string; // From "Machine"
+}
+
+export interface FluteLaminationPayload {
+  id?: number;
+  jobStepId: number;
+  jobNrcJobNo: string;
+  status: 'in_progress' | 'accept';
+  date: string; // ISO string
+  shift: string;
+  operatorName: string; // From "Operator Name"
+  film: string; // From "Film Type"
+  okQty: number;
+  qcCheckSignBy: string; // From "QC Sign By"
+  adhesive: string; // From "Adhesive"
+  wastage: number; // From "Wastage"
+}
+
+export interface PunchingPayload {
+  id?: number;
+  jobStepId: number;
+  jobNrcJobNo: string;
+  status: 'in_progress' | 'accept';
+  date: string; // ISO string
+  shift: string;
+  operatorName: string; // From "Operator Name"
+  okQty: number;
+  machine: string; // From "Machine"
+  qcCheckSignBy: string;
+  die: string; // From "Die Used"
+  wastage: number; // From "Wastage"
+  remarks: string; // From "Remarks"
+}
+
+export interface FlapPastingPayload {
+  id?: number;
+  jobStepId: number;
+  jobNrcJobNo: string;
+  status: 'in_progress' | 'accept';
+  machineNo: string; // From "Machine No"
+  date: string; // ISO string
+  shift: string; // From Dart code, not in form, will default
+  operatorName: string; // From "Operator Name"
+  adhesive: string; // From "Adhesive"
+  quantity: number; // From "Quantity"
+  wastage: number; // From "Wastage"
+  qcCheckSignBy: string;
+  remarks: string; // From "Remarks"
+}
+
+export interface QCDetailsPayload {
+  id?: number;
+  jobStepId: number;
+  jobNrcJobNo: string;
+  status: 'in_progress' | 'accept';
+  date: string; // ISO string
+  shift: string;
+  operatorName: string;
+  checkedBy: string; // From "Checked By"
+  rejectedQty: number; // From "Reject Quantity"
+  passQty: number;
+  reasonForRejection: string; // From "Reason for Rejection"
+  remarks: string; // From "Remarks"
+  qcCheckSignBy: string;
+}
+
+export interface DispatchDetailsPayload {
+  id?: number;
+  jobStepId: number;
+  jobNrcJobNo: string;
+  status: 'in_progress' | 'accept';
+  date: string; // ISO string
+  shift: string;
+  operatorName: string; // From "Operator Name"
+  noOfBoxes: number;
+  dispatchNo: string; // From "Dispatch No"
+  dispatchDate: string; // ISO string
+  remarks: string; // From "Remarks"
+  balanceQty: number; // From "Balance Qty"
+  qcCheckSignBy: string;
+}
+
+
+export interface JobPlanStep {
+  id: number;
+  jobStepId: number; // Added: This is the ID that step-specific payloads expect
+  stepNo: number;
+  stepName: string;
+  machineDetails: MachineDetailInStep[];
+  status: 'planned' | 'start' | 'stop';
+  startDate: string | null;
+  endDate: string | null;
+  user: string | null; // Employee ID
+  createdAt: string;
+  updatedAt: string;
+  // Optional properties to store fetched step-specific details
+  paperStoreDetails?: PaperStorePayload;
+  corrugationDetails?: CorrugationPayload;
+  printingDetails?: PrintingDetailsPayload;
+  fluteLaminationDetails?: FluteLaminationPayload;
+  punchingDetails?: PunchingPayload;
+  flapPastingDetails?: FlapPastingPayload;
+  qcDetails?: QCDetailsPayload;
+  dispatchDetails?: DispatchDetailsPayload;
+}
+
+export interface JobPlan {
+  jobPlanId: number;
+  nrcJobNo: string;
+  jobDemand: 'high' | 'medium' | 'low' | null;
+  createdAt: string;
+  updatedAt: string;
+  steps: JobPlanStep[];
 }
 
 export interface Job {
@@ -76,53 +247,28 @@ export interface Job {
   lengthBoardY: string | null;
   boardSize: string;
   noUps: string | null;
-  artworkReceivedDate: string | null; // Date string (ISO or YYYY-MM-DD)
-  artworkApprovedDate: string | null; // Date string (ISO or YYYY-MM-DD)
-  shadeCardApprovalDate: string | null; // Date string (ISO or YYYY-MM-DD)
-  srNo: number | null; // Used for PO linkage (PO Number ID)
+  artworkReceivedDate: string | null;
+  artworkApprovedDate: string | null;
+  shadeCardApprovalDate: string | null;
+  srNo: number | null;
   jobDemand: 'high' | 'medium' | 'low' | null;
-  imageURL: string | null; // For artwork image URL (or Base64 string)
+  imageURL: string | null;
   createdAt: string;
   updatedAt: string;
   userId: string | null;
-  machineId: string | null; // ID of the assigned machine
+  machineId: string | null;
 
-  // Fields that might be on the Job object if backend updates it after PO creation
-  poNumber: string | null; // Corresponds to P.O. Number
-  unit: string | null; // Corresponds to Unit
-  plant: string | null; // Corresponds to Plant
-  totalPOQuantity: number | null; // Corresponds to Total P.O. Quantity
-  dispatchQuantity: number | null; // Corresponds to Dispatch Quantity
-  pendingQuantity: number | null; // Corresponds to Pending Quantity
-  noOfSheets: number | null; // Corresponds to No. of Sheets
-  poDate: string | null; // Corresponds to P.O. Date (ISO or YYYY-MM-DD)
-  deliveryDate: string | null; // Corresponds to Delivery Date (ISO or YYYY-MM-DD)
-  dispatchDate: string | null; // Corresponds to Dispatch Date (ISO or YYYY-MM-DD)
-  nrcDeliveryDate: string | null; // Corresponds to NRC Delivery Date (ISO or YYYY-MM-DD)
+  poNumber: string | null;
+  unit: string | null;
+  plant: string | null;
+  totalPOQuantity: number | null;
+  dispatchQuantity: number | null;
+  pendingQuantity: number | null;
+  noOfSheets: number | null;
+  poDate: string | null;
+  deliveryDate: string | null;
+  dispatchDate: string | null;
+  nrcDeliveryDate: string | null;
 
-  // Field for Job Planning Steps
-  jobSteps: JobStep[] | null; // Array of steps for job planning
-}
-
-// NEW INTERFACES FOR JOB PLANNING DATA
-export interface JobPlanStep {
-  id: number;
-  stepNo: number;
-  stepName: string;
-  machineDetails: any[]; // Assuming this can be an array, or could be string if it's machineDetail
-  status: string; // e.g., "stop", "start", "planned"
-  startDate: string | null;
-  endDate: string | null;
-  user: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
-
-export interface JobPlan {
-  jobPlanId: number;
-  nrcJobNo: string;
-  jobDemand: 'high' | 'medium' | 'low' | null;
-  createdAt: string;
-  updatedAt: string;
-  steps: JobPlanStep[];
+  jobSteps: JobStep[] | null;
 }

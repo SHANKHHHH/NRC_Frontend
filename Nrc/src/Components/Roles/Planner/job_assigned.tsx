@@ -1,5 +1,6 @@
 // src/Components/Roles/Planner/job_assigned.tsx
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { type JobPlan } from './Types/job.ts'; // Adjust path as needed
 import JobPlanningCard from './jobPlanningCard/JobPlanningCard.tsx'; // Import the new card component
 import JobPlanningDetailModal from './modal/JobPlanningDetailModal.tsx'; // Import the new detail modal
@@ -9,6 +10,7 @@ const JobAssigned: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedJobPlan, setSelectedJobPlan] = useState<JobPlan | null>(null); // For detail modal
+  const navigate = useNavigate(); // Initialize navigate
 
   // Function to fetch all job plans
   const fetchJobPlans = async () => {
@@ -62,6 +64,11 @@ const JobAssigned: React.FC = () => {
     return () => clearTimeout(timer);
   }, []);
 
+  // Handler for clicking the JobPlanningCard itself
+  const handleCardClick = (jobPlan: JobPlan) => {
+    navigate(`/dashboard/planner/job-steps/${jobPlan.jobPlanId}`);
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8  min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Assigned Job Plans</h1>
@@ -90,7 +97,8 @@ const JobAssigned: React.FC = () => {
                 <JobPlanningCard
                   key={jobPlan.jobPlanId}
                   jobPlan={jobPlan}
-                  onClick={setSelectedJobPlan}
+                  onClick={() => setSelectedJobPlan(jobPlan)} // Button click opens detail modal
+                  onCardClick={handleCardClick} // New prop for card click navigation
                 />
               ))}
             </div>

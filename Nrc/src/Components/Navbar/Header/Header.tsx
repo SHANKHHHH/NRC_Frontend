@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Tab from '../../Tab/Tab';
 import TabList from '../../Tab/TabList';
 import { TabProvider } from '../../../context/TabContext';
 import CreateNewId from '../../UserProfile/Options/CreateNewId';
 import Notifications from '../../UserProfile/Options/Notifications';
+import { UserDetailsPage } from '../../UserProfile/UserManagement';
 import logo from '../../../assets/Login/logo1.png';
 import userIcon from '../../../assets/Icons/user.svg';
 import UserSidebar from '../../UserProfile/UserSidebar';
@@ -103,6 +105,7 @@ const allTabSets: { [key: string]: { label: string; value: string }[] } = {
 };
 
 const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }) => {
+  const navigate = useNavigate();
   // Pick the right tab set for the role, default to admin if not found
   const normalizedRole = (role || '').toLowerCase().replace(/ /g, '_');
   const tabItems = allTabSets[normalizedRole] || allTabSets['admin'];
@@ -111,6 +114,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateId, setShowCreateId] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [showUserDetails, setShowUserDetails] = useState(false);
   const [activeManageRole, setActiveManageRole] = useState<string | null>(null);
 
   return (
@@ -217,6 +221,15 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
               case "Create new ID":
                 setShowCreateId(true);
                 break;
+              case "User Details":
+                setShowUserDetails(true);
+                break;
+              case "Edit Machine":
+                navigate('/dashboard/edit-machine');
+                break;
+              case "Test Edit Machine":
+                navigate('/dashboard/test-edit-machine');
+                break;
             }
             setSidebarOpen(false);
             setMenuOpen(false);
@@ -226,8 +239,12 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
             setSidebarOpen(false);
             setMenuOpen(false);
           } else if (normalizedRole === 'planner') {
-            const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
-            if (found) setTabValue(found.tab);
+            if (option === "Edit Machine") {
+              navigate('/dashboard/edit-machine');
+            } else {
+              const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
+              if (found) setTabValue(found.tab);
+            }
             setSidebarOpen(false);
             setMenuOpen(false);
           }
@@ -263,6 +280,14 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
           role={activeManageRole}
           onClose={() => setActiveManageRole(null)}
         />
+      )}
+
+      {showUserDetails && (
+        <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
+          <UserDetailsPage
+            onClose={() => setShowUserDetails(false)}
+          />
+        </div>
       )}
     </header>
   );

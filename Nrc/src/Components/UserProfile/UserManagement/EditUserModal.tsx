@@ -1,40 +1,34 @@
-import React, { useState } from "react";
-import { Check, X } from "lucide-react";
-import { roleOptions, type CreateUserPayload } from "../UserManagement/types";
+import React, { useState } from 'react';
+import { User, X, Check } from 'lucide-react';
+import { type UserData, roleOptions, type UpdateUserPayload } from './types';
 
-interface CreateNewIdProps {
+interface EditUserModalProps {
+  user: UserData;
   onClose: () => void;
-  onSuccess?: () => void;
+  onSuccess: () => void;
 }
 
-const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
-  console.log('Available role options:', roleOptions);
-  
+const EditUserModal: React.FC<EditUserModalProps> = ({ user, onClose, onSuccess }) => {
   const [form, setForm] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    password: "",
+    name: user.name,
+    email: user.email,
   });
 
-  const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
+  const [selectedRoles, setSelectedRoles] = useState<string[]>(user.roles);
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
   const handleRoleToggle = (roleValue: string) => {
-    console.log('Role toggle clicked:', roleValue);
-    setSelectedRoles(prev => {
-      const newRoles = prev.includes(roleValue)
+    setSelectedRoles(prev => 
+      prev.includes(roleValue)
         ? prev.filter(role => role !== roleValue)
-        : [...prev, roleValue];
-      console.log('Updated selected roles:', newRoles);
-      return newRoles;
-    });
+        : [...prev, roleValue]
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -49,25 +43,22 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
     setError(null);
 
     try {
-      console.log('Form data:', form);
-      console.log('Selected roles before payload:', selectedRoles);
-      
-      const payload: CreateUserPayload = {
+      const payload: UpdateUserPayload = {
+        name: form.name,
         email: form.email,
-        password: form.password,
         roles: selectedRoles,
-        firstName: form.firstName,
-        lastName: form.lastName,
       };
-      
-      console.log('Final payload being sent to backend:', payload);
-      console.log('Payload JSON stringified:', JSON.stringify(payload));
+
+      // Only include password if it's been set
+      if (password.trim()) {
+        payload.password = password;
+      }
 
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch('https://nrc-backend-his4.onrender.com/api/auth/add-member', {
-        method: 'POST',
+      const response = await fetch(`https://nrc-backend-his4.onrender.com/api/auth/users/${user.id}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
@@ -77,21 +68,17 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create user');
+        throw new Error(errorData.message || 'Failed to update user');
       }
 
       const result = await response.json();
       if (result.success) {
-        setSuccess('User created successfully!');
-        setTimeout(() => {
-          onSuccess?.();
-          onClose();
-        }, 1500);
+        onSuccess();
       } else {
-        throw new Error(result.message || 'Failed to create user');
+        throw new Error(result.message || 'Failed to update user');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create user');
+      setError(err instanceof Error ? err.message : 'Failed to update user');
     } finally {
       setLoading(false);
     }
@@ -103,9 +90,13 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
         {/* Header */}
         <div className="w-full px-8 pt-6 pb-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-900">Create Account</h2>
-              <p className="text-[#00AEEF] text-sm mt-1">Create New Login ID</p>
+            <div className="flex items-center space-x-3">
+              <div className="bg-blue-100 p-2 rounded-full">
+                <User className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Edit User</h2>
+              </div>
             </div>
             <button
               onClick={onClose}
@@ -124,41 +115,20 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
               {error}
             </div>
           )}
-          
-          {success && (
-            <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded text-sm">
-              {success}
-            </div>
-          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* First Name */}
+            {/* Name */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">First Name</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
               <input
                 type="text"
-                name="firstName"
-                value={form.firstName}
+                name="name"
+                value={form.name}
                 onChange={handleInputChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
                 required
               />
             </div>
-
-            {/* Last Name */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-              <input
-                type="text"
-                name="lastName"
-                value={form.lastName}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                required
-              />
-            </div>
-
-
 
             {/* Email */}
             <div>
@@ -173,18 +143,7 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
               />
             </div>
 
-            {/* Password */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Set Password</label>
-              <input
-                type="password"
-                name="password"
-                value={form.password}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-                required
-              />
-            </div>
+
 
             {/* Role Selection */}
             <div>
@@ -219,6 +178,20 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
               )}
             </div>
 
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <input
+                type="password"
+                name="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password (leave blank to keep current)"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+              />
+              <p className="text-xs text-gray-500 mt-1">Leave blank to keep current password</p>
+            </div>
+
             {/* Submit Button */}
             <button
               type="submit"
@@ -231,7 +204,7 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
                 </svg>
               )}
-              {loading ? 'Creating...' : 'Create ID'}
+              {loading ? 'Saving...' : 'Save Changes'}
             </button>
           </form>
         </div>
@@ -240,4 +213,4 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
   );
 };
 
-export default CreateNewId;
+export default EditUserModal; 

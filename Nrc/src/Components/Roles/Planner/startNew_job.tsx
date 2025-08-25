@@ -1,5 +1,5 @@
 // src/Components/Roles/Planner/startNew_job.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { type Job } from './Types/job.ts'; // Adjust path as needed
 import JobCard from './jobCard/JobCard'; // Adjust path as needed
 import JobDetailModal from './modal/jobDetailModal'; // Adjust path as needed
@@ -10,6 +10,8 @@ const StartNewJob: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null); // For the read-only detail modal
   const [message, setMessage] = useState<string | null>(null); // For success/error messages after update
+  const [searchTerm, setSearchTerm] = useState<string>(''); // For search functionality
+  const [filteredJobs, setFilteredJobs] = useState<Job[]>([]); // For filtered search results
 
   // Function to fetch all jobs
   const fetchJobs = async () => {
@@ -98,23 +100,17 @@ const StartNewJob: React.FC = () => {
         throw new Error(errorData.message || `Failed to update job status: ${response.status} ${response.statusText}`);
       }
 
-      const updatedJobData = await response.json();
-      if (updatedJobData.success) {
-        setMessage(`Job ${nrcJobNo} successfully set to ACTIVE!`);
-        // Update the local state to reflect the change
-        setJobs(prevJobs =>
-          prevJobs.map(job =>
-            job.nrcJobNo === nrcJobNo ? { ...job, status: 'ACTIVE' } : job
-          )
-        );
-        // Clear the selected job to close the modal
-        setSelectedJob(null); // Close the detail modal
+      const result = await response.json();
+      if (result.success) {
+        setMessage(`Job ${nrcJobNo} status updated to ACTIVE successfully!`);
+        // Refresh the jobs list to reflect the change
+        fetchJobs();
       } else {
-        setMessage(updatedJobData.message || `Failed to update job ${nrcJobNo}.`);
+        throw new Error(result.message || 'Failed to update job status.');
       }
     } catch (err) {
       if (err instanceof Error) {
-        setMessage(`Error updating job: ${err.message}`);
+        setMessage(`Error: ${err.message}`);
       } else {
         setMessage('An unknown error occurred during job update.');
       }
@@ -124,6 +120,59 @@ const StartNewJob: React.FC = () => {
       setTimeout(() => setMessage(null), 3000);
     }
   };
+
+  // Function to handle search - optimized with useCallback
+  const handleSearch = useCallback((searchValue: string) => {
+    setSearchTerm(searchValue);
+    
+    if (!searchValue.trim()) {
+      setFilteredJobs([]); // Clear filtered results if search is empty
+      return;
+    }
+
+    const filtered = jobs.filter(job => 
+      job.nrcJobNo.toLowerCase().includes(searchValue.toLowerCase())
+    );
+    setFilteredJobs(filtered);
+  }, [jobs]);
+
+  // Function to clear search
+  const clearSearch = () => {
+    setSearchTerm('');
+    setFilteredJobs([]);
+  };
+
+  // Optimized clear search function with immediate feedback
+  const handleClearSearch = useCallback(() => {
+    // Clear immediately for better UX
+    setSearchTerm('');
+    setFilteredJobs([]);
+  }, []);
+
+  // Debounced search input handler for better performance
+  const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value); // Update input immediately for responsive UI
+    
+    // Clear results immediately if search is empty
+    if (!value.trim()) {
+      setFilteredJobs([]);
+      return;
+    }
+    
+    // Small delay for search to avoid excessive filtering on every keystroke
+    const timeoutId = setTimeout(() => {
+      handleSearch(value);
+    }, 150); // 150ms delay for better performance
+    
+    return () => clearTimeout(timeoutId);
+  }, [handleSearch]);
+
+  // Immediate clear function for instant feedback
+  const handleImmediateClear = useCallback(() => {
+    setSearchTerm('');
+    setFilteredJobs([]);
+  }, []);
 
 
   useEffect(() => {
@@ -140,6 +189,50 @@ const StartNewJob: React.FC = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8  min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Manage Jobs</h1>
+
+      {/* Search Section */}
+      <div className="mb-8">
+        <div className="max-w-md mx-auto">
+          <div className="relative">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchInputChange}
+              placeholder="Search by NRC Job Number..."
+              className="w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <svg
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+            {searchTerm && (
+              <button
+                onClick={handleImmediateClear}
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-gray-500 text-white px-3 py-1 rounded-md hover:bg-gray-600 transition-colors text-sm"
+              >
+                Clear
+              </button>
+            )}
+          </div>
+          {searchTerm && (
+            <p className="text-sm text-gray-600 mt-2 text-center">
+              {filteredJobs.length > 0 
+                ? `Found ${filteredJobs.length} job(s) matching "${searchTerm}"`
+                : `No jobs found matching "${searchTerm}"`
+              }
+            </p>
+          )}
+        </div>
+      </div>
 
       {loading && (
         <div className="flex justify-center items-center h-64">
@@ -163,43 +256,93 @@ const StartNewJob: React.FC = () => {
 
       {!loading && !error && (
         <>
-          {/* Active Jobs Section */}
-          <section className="mb-10">
-            <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Active Jobs ({activeJobs.length})</h2>
-            {activeJobs.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No active jobs found.</p>
-            ) : (
+          {/* Search Results Section - Show when searching */}
+          {searchTerm && filteredJobs.length > 0 && (
+            <section className="mb-10">
+              <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">
+                Search Results ({filteredJobs.length})
+              </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {activeJobs.map(job => (
+                {filteredJobs.map(job => (
                   <JobCard
                     key={job.id}
                     job={job}
-                    onClick={setSelectedJob} // Original onClick to open full details
-                    // Removed onInitiateJobClick and jobCompletionStatus props
+                    onClick={setSelectedJob}
                   />
                 ))}
               </div>
-            )}
-          </section>
+            </section>
+          )}
 
-          {/* Inactive Jobs Section */}
-          <section>
-            <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Inactive Jobs ({inactiveJobs.length})</h2>
-            {inactiveJobs.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No inactive jobs found.</p>
-            ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-                {inactiveJobs.map(job => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    onClick={setSelectedJob} // Original onClick to open full details
-                    // Removed onInitiateJobClick and jobCompletionStatus props
+          {/* No Search Results Message */}
+          {searchTerm && filteredJobs.length === 0 && (
+            <section className="mb-10">
+              <div className="text-center py-12">
+                <svg
+                  className="mx-auto h-12 w-12 text-gray-400 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.562M15 9.75a3 3 0 11-6 0 3 3 0 016 0z"
                   />
-                ))}
+                </svg>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
+                <p className="text-gray-500">No jobs match your search for "{searchTerm}"</p>
+                <button
+                  onClick={handleImmediateClear}
+                  className="mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Clear Search
+                </button>
               </div>
-            )}
-          </section>
+            </section>
+          )}
+
+          {/* All Jobs Sections - Show when not searching or when search is cleared */}
+          {!searchTerm && (
+            <>
+              {/* Active Jobs Section */}
+              <section className="mb-10">
+                <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Active Jobs ({activeJobs.length})</h2>
+                {activeJobs.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No active jobs found.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {activeJobs.map(job => (
+                      <JobCard
+                        key={job.id}
+                        job={job}
+                        onClick={setSelectedJob}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+
+              {/* Inactive Jobs Section */}
+              <section>
+                <h2 className="text-2xl font-semibold text-gray-700 mb-6 border-b pb-2">Inactive Jobs ({inactiveJobs.length})</h2>
+                {inactiveJobs.length === 0 ? (
+                  <p className="text-gray-500 text-center py-8">No inactive jobs found.</p>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    {inactiveJobs.map(job => (
+                      <JobCard
+                        key={job.id}
+                        job={job}
+                        onClick={setSelectedJob}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            </>
+          )}
         </>
       )}
 
