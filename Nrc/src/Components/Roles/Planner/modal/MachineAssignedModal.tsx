@@ -24,7 +24,7 @@ const MachineAssignedModal: React.FC<MachineAssignedModalProps> = ({ currentMach
           throw new Error('Authentication token not found. Please log in.');
         }
 
-        const response = await fetch('https://nrc-backend-his4.onrender.com/api/machines?', {
+        const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/machines?', {
           headers: {
             'Authorization': `Bearer ${accessToken}`,
           },

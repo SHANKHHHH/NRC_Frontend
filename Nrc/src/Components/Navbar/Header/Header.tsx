@@ -4,7 +4,7 @@ import Tab from '../../Tab/Tab';
 import TabList from '../../Tab/TabList';
 import { TabProvider } from '../../../context/TabContext';
 import CreateNewId from '../../UserProfile/Options/CreateNewId';
-import Notifications from '../../UserProfile/Options/Notifications';
+// import Notifications from '../../UserProfile/Options/Notifications';
 import { UserDetailsPage } from '../../UserProfile/UserManagement';
 import logo from '../../../assets/Login/logo1.png';
 import userIcon from '../../../assets/Icons/user.svg';
@@ -26,8 +26,9 @@ const sidebarConfig: {
     options: [
       { label: "Dashboard", tab: "dashboard" },
       { label: "Planner", tab: "planner" },
-      { label: "Notifications", tab: "notifications" },
+      // { label: "Notifications", tab: "notifications" },
       { label: "Dispatch Executive", tab: "dispatch" },
+      { label: "Edit Working Details", tab: "edit-working-details" },
       // ...other admin options
     ]
   },
@@ -36,7 +37,7 @@ const sidebarConfig: {
     options: [
       { label: "Dashboard", tab: "dashboard" },
       { label: "Jobs", tab: "jobs" },
-      { label: "Notifications", tab: "notifications" }
+      // { label: "Notifications", tab: "notifications" }
     ]
   },
   production_head: {
@@ -44,7 +45,7 @@ const sidebarConfig: {
     options: [
       { label: "Dashboard", tab: "dashboard" },
       { label: "Jobs", tab: "jobs" },
-      { label: "Notifications", tab: "notifications" }
+      // { label: "Notifications", tab: "notifications" }
     ]
   },
   dispatch_executive: {
@@ -52,7 +53,7 @@ const sidebarConfig: {
     options: [
       { label: "Dashboard", tab: "dashboard" },
       { label: "Jobs", tab: "jobs" },
-      { label: "Notifications", tab: "notifications" }
+      // { label: "Notifications", tab: "notifications" }
     ]
   },
   planner: {
@@ -60,7 +61,7 @@ const sidebarConfig: {
     options: [
       { label: "Dashboard", tab: "dashboard" },
       { label: "Start New Job", tab: "start new job" },
-      { label: "Notifications", tab: "notifications" },
+      // { label: "Notifications", tab: "notifications" },
       { label: "Jobs", tab: "jobs" },
       { label: "Job Assigned", tab: "job assigned" } // ADDED: New tab for Planner
     ]
@@ -76,28 +77,29 @@ const allTabSets: { [key: string]: { label: string; value: string }[] } = {
     { label: 'Dispatch Head', value: 'dispatch' },
     { label: 'QC Manager', value: 'qc' },
     { label: 'Printing', value: 'printing' },
-    { label: 'Notifications', value: 'notifications' },
+    { label: 'Edit Working Details', value: 'edit-working-details' },
+    // { label: 'Notifications', value: 'notifications' },
     // ...add any others you had
   ],
   printing_manager: [
     { label: 'Dashboard', value: 'dashboard' },
     { label: 'Jobs', value: 'jobs' },
-    { label: 'Notifications', value: 'notifications' },
+    // { label: 'Notifications', value: 'notifications' },
   ],
   production_head: [
     { label: 'Dashboard', value: 'dashboard' },
     { label: 'Jobs', value: 'jobs' },
-    { label: 'Notifications', value: 'notifications' },
+    // { label: 'Notifications', value: 'notifications' },
   ],
   dispatch_executive: [
-    { label: 'Dashboard', value: 'dashboard' },
+    { label: 'Dashboard', value: 'jobs' },
     { label: 'Jobs', value: 'jobs' },
-    { label: 'Notifications', value: 'notifications' },
+    // { label: 'Notifications', value: 'notifications' },
   ],
   planner: [
     { label: 'Dashboard', value: 'dashboard' },
     { label: 'Start New Job', value: 'start new job' },
-    { label: 'Notifications', value: 'notifications' },
+    // { label: 'Notifications', value: 'notifications' },
     { label: 'Jobs', value: 'jobs' },
     { label: 'Job Assigned', value: 'job assigned' }, // ADDED: New tab for Planner
   ],
@@ -113,7 +115,7 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
   const [menuOpen, setMenuOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [showCreateId, setShowCreateId] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  // const [showNotifications, setShowNotifications] = useState(false);
   const [showUserDetails, setShowUserDetails] = useState(false);
   const [activeManageRole, setActiveManageRole] = useState<string | null>(null);
 
@@ -215,9 +217,9 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
               case "Printing Manager":
                 setTabValue("printing");
                 break;
-              case "Notifications":
-                setShowNotifications(true);
-                break;
+              // case "Notifications":
+              //   setShowNotifications(true);
+              //   break;
               case "Create new ID":
                 setShowCreateId(true);
                 break;
@@ -229,6 +231,9 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
                 break;
               case "Test Edit Machine":
                 navigate('/dashboard/test-edit-machine');
+                break;
+              case "Edit Working Details":
+                setTabValue("edit-working-details");
                 break;
             }
             setSidebarOpen(false);
@@ -271,9 +276,9 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
         </div>
       )}
 
-      {showNotifications && (
+      {/* {showNotifications && (
         <Notifications onClose={() => setShowNotifications(false)} />
-      )}
+      )} */}
 
       {activeManageRole && (
         <ManageComponent

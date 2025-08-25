@@ -33,7 +33,7 @@ const UserDetailsPage: React.FC<UserDetailsPageProps> = ({ onClose }) => {
       if (!accessToken) throw new Error('Authentication token not found.');
 
       console.log('Making API call to fetch users...');
-      const response = await fetch('https://nrc-backend-his4.onrender.com/api/auth/users', {
+      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/users', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
         },

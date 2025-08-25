@@ -111,7 +111,7 @@ const JobDetailsContainer: React.FC<JobDetailsContainerProps> = () => {
       if (!accessToken) throw new Error('Authentication token not found.');
 
       // Fetch job planning data
-      const jobPlanningResponse = await fetch('https://nrc-backend-his4.onrender.com/api/job-planning/', {
+      const jobPlanningResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
@@ -124,7 +124,7 @@ const JobDetailsContainer: React.FC<JobDetailsContainerProps> = () => {
       // Fetch completed jobs data with better error handling
       let completedJobsData: CompletedJob[] = [];
       try {
-        const completedJobsResponse = await fetch('https://nrc-backend-his4.onrender.com/api/completed-jobs', {
+        const completedJobsResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/completed-jobs', {
           headers: { 
             'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json'

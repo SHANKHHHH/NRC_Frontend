@@ -16,7 +16,7 @@ const sidebarConfig: Record<string, { displayName: string; options: string[] }> 
     displayName: 'Admin',
     options: [
       'Dashboard',
-      'Notifications',
+      // 'Notifications',
       'Create new ID',
       'User Details',
       'Manage Access',
@@ -27,23 +27,24 @@ const sidebarConfig: Record<string, { displayName: string; options: string[] }> 
       'QC Manager',
       'Edit Machine', // ADDED: Edit Machine option for Admin
       'Test Edit Machine', // TEMPORARY: Test option for debugging
+      'Edit Working Details',
     ],
   },
   printing_manager: {
     displayName: 'Printing Manager',
-    options: ['Dashboard', 'Jobs', 'Notifications'],
+    options: ['Dashboard', 'Jobs', /* 'Notifications' */],
   },
   dispatch_executive: {
     displayName: 'Dispatch Executive',
-    options: ['Dashboard', 'Jobs', 'Notifications'],
+    options: ['Dashboard', 'Jobs', /* 'Notifications' */],
   },
   production_head: {
     displayName: 'Production Head',
-    options: ['Dashboard', 'Jobs', 'Notifications'],
+    options: ['Dashboard', 'Jobs', /* 'Notifications' */],
   },
   planner: {
     displayName: 'Planner',
-    options: ['Dashboard', 'Start New Job', 'Notifications', 'Jobs', 'Job Assigned', 'Edit Machine'], // ADDED: Edit Machine option for Planner
+    options: ['Dashboard', 'Start New Job', /* 'Notifications' */, 'Jobs', 'Job Assigned', 'Edit Machine'], // ADDED: Edit Machine option for Planner
   },
 };
 

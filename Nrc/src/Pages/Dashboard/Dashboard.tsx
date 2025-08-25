@@ -12,6 +12,7 @@ const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/Dispatch
 const AdminDashboard = lazy(() => import('../../Components/Roles/Admin/AdminDashboard.tsx'));
 const InProgressJobs = lazy(() => import('../../Components/Roles/Admin/InProgressJobs'));
 const PlannedJobs = lazy(() => import('../../Components/Roles/Admin/PlannedJobs'));
+import EditWorkingDetails from '../../Components/Roles/Admin/EditWorkingDetails';
 import PrintingMgrJobCard from '../../Components/Roles/PrintingMgr/job'; // Renamed import to avoid conflict
 import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
 import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';
@@ -105,6 +106,9 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
             <DispatchOverview />
             <DispatchSummary />
           </>
+        )}
+        {role === 'admin' && tabValue === 'edit-working-details' && (
+          <EditWorkingDetails />
         )}
 
         {/* Planner role specific components */}
