@@ -1,0 +1,9 @@
+{
+  "buildCommand": "cd Nrc && npm run build",
+  "outputDirectory": "Nrc/dist",
+  "installCommand": "cd Nrc && npm install",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
+  ]
+} 
