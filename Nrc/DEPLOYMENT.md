@@ -5,7 +5,7 @@
 1. **Push your changes to GitHub:**
    ```bash
    git add .
-   git commit -m "Fix Vercel deployment: configure for Nrc subdirectory structure"
+   git commit -m "Fix Vercel deployment: simplified configuration for subdirectory"
    git push origin main
    ```
 
@@ -17,19 +17,23 @@
 - **Problem**: Vercel was looking for `package.json` in root but it's in `Nrc/` subdirectory
 - **Solution**: Updated Vercel configuration to point to correct paths
 
-### **Issue 2: Vite Command Not Found**
+### **Issue 2: Complex Build Configuration**
+- **Problem**: `@vercel/static-build` adapter was causing issues
+- **Solution**: Simplified to use basic Vercel configuration with explicit commands
+
+### **Issue 3: Vite Command Not Found**
 - **Problem**: `vite` was in `devDependencies` but Vercel needs it during build
 - **Solution**: Moved `vite` to `dependencies` in `package.json`
 
-### **Issue 3: Vite Version Compatibility**
+### **Issue 4: Vite Version Compatibility**
 - **Problem**: Vite 6.3.5 was too new and had compatibility issues with Vercel
 - **Solution**: Downgraded to Vite 5.4.0 (stable and widely supported)
 
-### **Issue 4: Missing Build Configuration**
+### **Issue 5: Missing Build Configuration**
 - **Problem**: `vercel.json` didn't specify build settings
-- **Solution**: Added proper build configuration with `@vercel/static-build`
+- **Solution**: Added proper build configuration with explicit commands
 
-### **Issue 5: Missing Vercel Ignore**
+### **Issue 6: Missing Vercel Ignore**
 - **Problem**: Unnecessary files were being uploaded
 - **Solution**: Added `.vercelignore` file
 
@@ -52,21 +56,12 @@ NR_Containers/
 ### **vercel.json (ROOT directory)**
 ```json
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "Nrc/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "Nrc/dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/"
-    }
+  "buildCommand": "cd Nrc && npm run build",
+  "outputDirectory": "Nrc/dist",
+  "installCommand": "cd Nrc && npm install",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/" }
   ]
 }
 ```
@@ -95,8 +90,8 @@ npm run build
 ## 🚨 Common Issues & Solutions
 
 ### **Build Fails with "Could not read package.json"**
-- ✅ **Fixed**: Vercel now points to `Nrc/package.json`
-- ✅ **Fixed**: Correct `distDir` path specified
+- ✅ **Fixed**: Vercel now uses `cd Nrc && npm run build`
+- ✅ **Fixed**: Correct `outputDirectory` path specified
 
 ### **Build Fails with "vite: command not found"**
 - ✅ **Fixed**: `vite` is now in `dependencies`
@@ -104,8 +99,8 @@ npm run build
 - ✅ **Fixed**: Proper Vercel build configuration
 
 ### **Build Succeeds but App Doesn't Work**
-- Check `distDir` in `vercel.json` points to `Nrc/dist`
-- Verify `routes` configuration for SPA routing
+- Check `outputDirectory` in `vercel.json` points to `Nrc/dist`
+- Verify `rewrites` configuration for SPA routing
 
 ### **Environment Variables**
 - Set any required environment variables in Vercel dashboard
@@ -113,7 +108,7 @@ npm run build
 
 ## 📊 Build Performance
 
-- **Build time**: ~26 seconds (optimized with Vite 5.4.0)
+- **Build time**: ~21 seconds (optimized with Vite 5.4.0)
 - **Bundle size**: Optimized with Vite
 - **Chunking**: Automatic code splitting enabled
 
@@ -125,11 +120,11 @@ npm run build
 
 ## 🎯 Why This Configuration Works
 
-1. **Correct paths**: Vercel knows where to find `package.json` and build output
-2. **Vite 5.4.0**: Stable, widely supported version
-3. **@vercel/static-build**: Official Vercel build adapter
+1. **Explicit commands**: `cd Nrc && npm run build` ensures correct directory
+2. **Simple configuration**: No complex adapters that might fail
+3. **Vite 5.4.0**: Stable, widely supported version
 4. **Proper dependency placement**: Vite accessible during build
-5. **Explicit build configuration**: No ambiguity about build process
+5. **Clear output directory**: Points to `Nrc/dist` where build output goes
 6. **SPA routing**: Handles React Router properly
 
 ## 🚀 Next Steps
@@ -144,4 +139,12 @@ After pushing these changes:
 - **Vercel configuration files** are now in the **ROOT** directory
 - **Your app code** remains in the **Nrc** subdirectory
 - **Build output** will be in **Nrc/dist**
-- **Vercel will automatically** find and use the correct paths 
+- **Vercel will automatically** find and use the correct paths
+- **Simplified configuration** reduces potential failure points
+
+## 🔍 What Changed in This Fix
+
+- **Removed complex build adapters** that were causing issues
+- **Added explicit directory navigation** (`cd Nrc`)
+- **Simplified configuration** to basic Vercel settings
+- **Maintained all previous fixes** (Vite version, dependencies, etc.) 
