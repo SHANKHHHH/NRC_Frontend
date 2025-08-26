@@ -268,7 +268,7 @@ const EditWorkingDetails: React.FC = () => {
       // If ALB fails, try onrender.com
       if (!response.ok) {
         console.log('🔍 ALB PUT failed, trying onrender.com...');
-        putUrl = `https://nrc-backend-his4.onrender.com/api/${stepType}/${encodeURIComponent(updatedData.jobNrcJobNo)}`;
+        putUrl = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/${stepType}/${encodeURIComponent(updatedData.jobNrcJobNo)}`;
         console.log('🔍 PUT request to onrender.com URL:', putUrl);
         
         response = await fetch(putUrl, {

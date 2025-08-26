@@ -6,10 +6,9 @@ import LineChartComponent from './ChartComponents/LineChartComponent';
 import BarChartComponent from './ChartComponents/BarChartComponent';
 import PieChartComponent from './ChartComponents/PieChartComponent';
 import AdvancedDataChart from './ChartComponents/AdvancedDataChart';
-import CompletedJobsChart from './ChartComponents/CompletedJobsChart';
 import JobPlansTable from './DataTable/JobPlansTable';
 import { useNavigate } from 'react-router-dom';
-import EditWorkingDetails from './EditWorkingDetails';
+import CompletedJobsTable from './CompletedJobsTable';
 
 // Types based on the API response structure
 interface JobPlanStep {
@@ -54,14 +53,37 @@ interface CompletedJob {
   jobPlanId: number;
   jobDemand: string;
   jobDetails: {
+    id: number;
+    customerName: string;
     preRate: number;
-    unit?: string;
+    latestRate: number;
+    [key: string]: any;
   };
   purchaseOrderDetails: {
-    poDate: string;
-    totalPOQuantity: number;
+    id: number;
+    customer: string;
     unit: string;
+    [key: string]: any;
   };
+  allSteps: Array<{
+    id: number;
+    stepName: string;
+    machineDetails: Array<{
+      unit: string | null;
+      machineId: string;
+      machineCode: string | null;
+      machineType: string;
+    }>;
+    dispatchProcess?: {
+      id: number;
+      quantity: number;
+      [key: string]: any;
+    };
+    [key: string]: any;
+  }>;
+  completedAt: string;
+  completedBy: string;
+  [key: string]: any;
 }
 
 interface AdminDashboardData {
@@ -826,11 +848,10 @@ const AdminDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Completed Jobs Analysis Chart */}
+      {/* Completed Jobs Analysis Table - Replaced chart with table */}
       {filteredData.completedJobsData && filteredData.completedJobsData.length > 0 && (
-        <CompletedJobsChart
+        <CompletedJobsTable
           data={filteredData.completedJobsData}
-          height={450}
           className="mb-8"
         />
       )}

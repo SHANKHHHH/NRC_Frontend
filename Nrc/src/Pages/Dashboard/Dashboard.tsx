@@ -1,23 +1,22 @@
 // Nrc/src/Pages/Dashboard/Dashboard.tsx
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 // Import the Job interface from the centralized types file
-import { type Job } from '../../Components/Roles/Planner/Types/job.ts'; // Corrected path to the Job interface
+
 
 const OrderSummary = lazy(() => import('../../Components/Roles/Admin/Planner/OrderSummary'));
 const ProductionSchedule = lazy(() => import('../../Components/Roles/Admin/Planner/ProductionSchedule'));
-const Summary = lazy(() => import('../../Components/Roles/Admin/Production_Head/Summary'));
-const ProductionUpdate = lazy(() => import('../../Components/Roles/Admin/Production_Head/ProductionUpdate'));
+
 const DispatchOverview = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchOverview'));
 const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchSummary'));
 const AdminDashboard = lazy(() => import('../../Components/Roles/Admin/AdminDashboard.tsx'));
-const InProgressJobs = lazy(() => import('../../Components/Roles/Admin/InProgressJobs'));
-const PlannedJobs = lazy(() => import('../../Components/Roles/Admin/PlannedJobs'));
+
 import EditWorkingDetails from '../../Components/Roles/Admin/EditWorkingDetails';
 import PrintingMgrJobCard from '../../Components/Roles/PrintingMgr/job'; // Renamed import to avoid conflict
 import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
 import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';
 import ReadyDispatchForm from '../../Components/Roles/Dispatch_Executive /ReadytoDispatch/readyDispatch';
 import ProductionSteps from '../../Components/Roles/ProductionHead/productionSteps/production_steps';
+import ProductionHeadDashboard from '../../Components/Roles/ProductionHead/production_dashboard';
 import PlannerDashboard from '../../Components/Roles/Planner/Planner_dashboard';
 import StartNewJob from '../../Components/Roles/Planner/startNew_job';
 import PlannerNotifications from '../../Components/Roles/Planner/planner_notifications';
@@ -96,10 +95,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
           </>
         )}
         {role === 'admin' && tabValue === 'production' && (
-          <>
-            <Summary />
-            <ProductionUpdate />
-          </>
+          <ProductionHeadDashboard />
         )}
         {role === 'admin' && tabValue === 'dispatch' && (
           <>
@@ -173,6 +169,11 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
           )
         )}
 
+        {/* Production Head Dashboard */}
+        {role === 'production_head' && tabValue === 'dashboard' && (
+          <ProductionHeadDashboard />
+        )}
+        
         {/* Production Head jobs tab - RESTORED ORIGINAL CONTENT */}
         {role === 'production_head' && tabValue === 'jobs' && (
           <div className="w-full flex flex-col items-center">
