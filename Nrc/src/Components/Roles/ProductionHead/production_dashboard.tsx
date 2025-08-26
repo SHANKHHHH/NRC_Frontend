@@ -9,34 +9,32 @@ import {
   UserGroupIcon,
   TruckIcon,
   DocumentTextIcon,
-  BuildingOfficeIcon
+  BuildingOfficeIcon,
+  MagnifyingGlassIcon,
+  EyeIcon
 } from '@heroicons/react/24/outline';
 import { productionService } from './productionService';
-import type { ProductionData, ProductionStep } from './productionService';
-
-
-
-
+import type { ProductionData, ProductionStep, AggregatedProductionData, JobPlan } from './productionService';
 
 const ProductionHeadDashboard: React.FC = () => {
+  const [aggregatedData, setAggregatedData] = useState<AggregatedProductionData | null>(null);
+  const [selectedJob, setSelectedJob] = useState<string>('');
   const [productionData, setProductionData] = useState<ProductionData>({
     corrugation: [],
     fluteLamination: [],
     punching: [],
     flapPasting: []
   });
-  
-  const [selectedJob, setSelectedJob] = useState<string>('');
-  const [availableJobs, setAvailableJobs] = useState<Array<{ nrcJobNo: string; customerName: string; status: string }>>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [filteredJobs, setFilteredJobs] = useState<Array<{ nrcJobNo: string; customerName: string; status: string }>>([]);
+  const [searchResults, setSearchResults] = useState<Array<{ nrcJobNo: string; jobDemand: string; totalSteps: number; hasProductionSteps: boolean }>>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [isLoadingJobs, setIsLoadingJobs] = useState(false);
+  const [isLoadingAggregated, setIsLoadingAggregated] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'details' | 'analytics'>('overview');
   const [error, setError] = useState<string | null>(null);
   const [authStatus, setAuthStatus] = useState<{ isAuthenticated: boolean; message: string } | null>(null);
-  const [dateRange, setDateRange] = useState<'7days' | '30days' | '3months' | 'custom'>('7days');
-  const [customDateRange, setCustomDateRange] = useState({ start: '', end: '' });
+  const [showDetailPanel, setShowDetailPanel] = useState(false);
+  const [selectedJobDetails, setSelectedJobDetails] = useState<JobPlan | null>(null);
 
   // Check authentication status
   useEffect(() => {
@@ -52,94 +50,93 @@ const ProductionHeadDashboard: React.FC = () => {
     checkAuth();
   }, []);
 
-  // Load available jobs
+  // Load aggregated production data
   useEffect(() => {
-    const loadJobs = async () => {
+    const loadAggregatedData = async () => {
       if (authStatus?.isAuthenticated) {
         try {
-          setIsLoadingJobs(true);
-          const jobs = await productionService.getAvailableJobs();
-          setAvailableJobs(jobs);
-          setFilteredJobs(jobs);
-          
-          // Auto-select first job if available
-          if (jobs.length > 0 && !selectedJob) {
-            setSelectedJob(jobs[0].nrcJobNo);
-          } else if (jobs.length === 0) {
-            setError('No active jobs found. Please check if there are any jobs with STATUS=ACTIVE in the system.');
-            // Stop loading since no jobs are available
-            setIsLoading(false);
-          }
+          setIsLoadingAggregated(true);
+          setError(null);
+          const data = await productionService.getAggregatedProductionData();
+          setAggregatedData(data);
         } catch (error) {
-          console.error('Error loading jobs:', error);
-          setError('Failed to load available jobs');
-          setIsLoading(false);
+          console.error('Error loading aggregated data:', error);
+          setError('Failed to load production overview data. Please try again.');
         } finally {
-          setIsLoadingJobs(false);
+          setIsLoadingAggregated(false);
         }
       }
     };
     
-    loadJobs();
-  }, [authStatus, selectedJob]); // Added selectedJob back to prevent stale closure
+    loadAggregatedData();
+  }, [authStatus]);
 
-  // Filter jobs based on search term
-  useEffect(() => {
+  // Search jobs
+  const handleSearch = async () => {
     if (!searchTerm.trim()) {
-      setFilteredJobs(availableJobs);
-    } else {
-      const filtered = availableJobs.filter(job => 
-        job.nrcJobNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        job.customerName.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-      setFilteredJobs(filtered);
+      setSearchResults([]);
+      return;
     }
-  }, [searchTerm, availableJobs]);
 
-  // Fetch production data from API
-  useEffect(() => {
-    const fetchProductionData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        
-        // Check auth before making API calls
-        const authCheck = productionService.checkAuthStatus();
-        if (!authCheck.isAuthenticated) {
-          setError(authCheck.message);
-          return;
-        }
-        
-        const data = await productionService.getAllProductionData(selectedJob);
-        setProductionData(data);
-      } catch (error) {
-        console.error('Error fetching production data:', error);
-        setError('Failed to fetch production data. Please try again.');
-        // Set empty data on error
-        setProductionData({
-          corrugation: [],
-          fluteLamination: [],
-          punching: [],
-          flapPasting: []
-        });
-      } finally {
-        setIsLoading(false);
+    try {
+      setIsSearching(true);
+      const results = await productionService.searchJobs(searchTerm);
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Error searching jobs:', error);
+      setError('Failed to search jobs. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Load production data for specific job
+  const loadJobProductionData = async (nrcJobNo: string) => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await productionService.getProductionDataByJob(nrcJobNo);
+      setProductionData(data);
+      setSelectedJob(nrcJobNo);
+    } catch (error) {
+      console.error('Error loading job production data:', error);
+      setError('Failed to load job production data. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle job selection from search results
+  const handleJobSelect = async (nrcJobNo: string) => {
+    await loadJobProductionData(nrcJobNo);
+    setSearchResults([]);
+    setSearchTerm('');
+  };
+
+  // Show job details in side panel
+  const handleShowJobDetails = async (nrcJobNo: string) => {
+    try {
+      const jobDetails = await productionService.getJobPlanByNrcJobNo(nrcJobNo);
+      if (jobDetails) {
+        setSelectedJobDetails(jobDetails);
+        setShowDetailPanel(true);
       }
-    };
-
-    if (selectedJob && authStatus?.isAuthenticated) {
-      fetchProductionData();
+    } catch (error) {
+      console.error('Error loading job details:', error);
+      setError('Failed to load job details. Please try again.');
     }
-  }, [selectedJob, authStatus]);
+  };
 
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'accept':
+      case 'completed':
         return 'bg-green-100 text-green-800 border-green-200';
-      case 'pending':
+      case 'start':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'stop':
         return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'reject':
-        return 'bg-red-100 text-red-800 border-red-200';
+      case 'planned':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
       default:
         return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -147,18 +144,21 @@ const ProductionHeadDashboard: React.FC = () => {
 
   const getStatusIcon = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'accept':
+      case 'completed':
         return <CheckCircleIcon className="h-5 w-5 text-green-600" />;
-      case 'pending':
-        return <ClockIcon className="h-5 w-5 text-yellow-600" />;
-      case 'reject':
-        return <ExclamationTriangleIcon className="h-5 w-5 text-red-600" />;
+      case 'start':
+        return <ClockIcon className="h-5 w-5 text-blue-600" />;
+      case 'stop':
+        return <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />;
+      case 'planned':
+        return <ClockIcon className="h-5 w-5 text-gray-600" />;
       default:
         return <ClockIcon className="h-5 w-5 text-gray-600" />;
     }
   };
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'Not started';
     return new Date(dateString).toLocaleDateString('en-GB', {
       day: '2-digit',
       month: 'short',
@@ -168,22 +168,21 @@ const ProductionHeadDashboard: React.FC = () => {
     });
   };
 
-  const calculateEfficiency = () => {
-    const totalSteps = 4;
-    const completedSteps = Object.values(productionData).filter(step => 
-      step.length > 0 && step[0].status === 'accept'
-    ).length;
-    return Math.round((completedSteps / totalSteps) * 100);
+  const getStepDisplayName = (stepName: string) => {
+    switch (stepName) {
+      case 'Corrugation':
+        return 'Corrugation';
+      case 'FluteLaminateBoardConversion':
+        return 'Flute Lamination';
+      case 'Punching':
+        return 'Punching';
+      case 'SideFlapPasting':
+        return 'Flap Pasting';
+      default:
+        return stepName;
+    }
   };
 
-  const calculateTotalQuantity = () => {
-    return Object.values(productionData).reduce((total, steps) => {
-      return total + steps.reduce((stepTotal: number, step: ProductionStep) => stepTotal + step.quantity, 0);
-    }, 0);
-  };
-
-
-  
   // Show loading if authentication is still pending
   if (!authStatus) {
     return (
@@ -196,22 +195,19 @@ const ProductionHeadDashboard: React.FC = () => {
     );
   }
   
-  if (isLoading || isLoadingJobs) {
+  if (isLoadingAggregated) {
     return (
-      <div className="min-h-screen  flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">
-            {isLoadingJobs ? 'Loading available jobs...' : 'Loading production data...'}
-          </p>
-
+          <p className="text-lg text-gray-600">Loading production overview...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen ">
+    <div className="min-h-screen">
       {/* Header */}
       <div className="bg-[#00AEEF] rounded-lg text-white shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -222,7 +218,7 @@ const ProductionHeadDashboard: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-3xl font-bold">Production Head Dashboard</h1>
-                <p className="text-blue-100">Monitor and manage production operations</p>
+                <p className="text-blue-100">Monitor and manage production operations across all jobs</p>
               </div>
             </div>
             <div className="flex items-center space-x-4">
@@ -241,30 +237,28 @@ const ProductionHeadDashboard: React.FC = () => {
               
               <button
                 onClick={() => {
-                  if (selectedJob) {
-                    const fetchProductionData = async () => {
-                      try {
-                        setIsLoading(true);
-                        setError(null);
-                        const data = await productionService.getAllProductionData(selectedJob);
-                        setProductionData(data);
-                      } catch (error) {
-                        console.error('Error refreshing production data:', error);
-                        setError('Failed to refresh production data. Please try again.');
-                      } finally {
-                        setIsLoading(false);
-                      }
-                    };
-                    fetchProductionData();
-                  }
+                  const loadAggregatedData = async () => {
+                    try {
+                      setIsLoadingAggregated(true);
+                      setError(null);
+                      const data = await productionService.getAggregatedProductionData();
+                      setAggregatedData(data);
+                    } catch (error) {
+                      console.error('Error refreshing data:', error);
+                      setError('Failed to refresh production data. Please try again.');
+                    } finally {
+                      setIsLoadingAggregated(false);
+                    }
+                  };
+                  loadAggregatedData();
                 }}
                 className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                disabled={isLoading}
+                disabled={isLoadingAggregated}
               >
-                <svg className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg className={`h-4 w-4 ${isLoadingAggregated ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                 </svg>
-                <span>{isLoading ? 'Refreshing...' : 'Refresh'}</span>
+                <span>{isLoadingAggregated ? 'Refreshing...' : 'Refresh'}</span>
               </button>
               <div className="bg-white/20 px-4 py-2 rounded-lg">
                 <span className="text-sm">Last Updated: {new Date().toLocaleTimeString()}</span>
@@ -274,100 +268,75 @@ const ProductionHeadDashboard: React.FC = () => {
         </div>
       </div>
 
-      {/* Job Selection & Search */}
+      {/* Job Search */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Job Selection Dropdown */}
-            <div>
-              <label htmlFor="jobSelect" className="block text-sm font-medium text-gray-700 mb-2">
-                Select Job
-              </label>
-              <select
-                id="jobSelect"
-                value={selectedJob}
-                onChange={(e) => setSelectedJob(e.target.value)}
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                disabled={isLoadingJobs}
-              >
-                <option value="">Select a job...</option>
-                {filteredJobs.map((job) => (
-                  <option key={job.nrcJobNo} value={job.nrcJobNo}>
-                    {job.nrcJobNo} - {job.customerName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Job Search */}
-            <div>
+          <div className="flex space-x-4">
+            <div className="flex-1">
               <label htmlFor="jobSearch" className="block text-sm font-medium text-gray-700 mb-2">
-                Search Jobs
+                Search Jobs by NRC Job No
               </label>
-              <input
-                id="jobSearch"
-                type="text"
-                placeholder="Search by NRC Job No or Customer..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Date Range Filter */}
-            <div>
-              <label htmlFor="dateRange" className="block text-sm font-medium text-gray-700 mb-2">
-                Date Range
-              </label>
-              <select
-                id="dateRange"
-                value={dateRange}
-                onChange={(e) => setDateRange(e.target.value as any)}
-                className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
-                <option value="7days">Last 7 Days</option>
-                <option value="30days">Last 30 Days</option>
-                <option value="3months">Last 3 Months</option>
-                <option value="custom">Custom Range</option>
-              </select>
+              <div className="flex space-x-2">
+                <input
+                  id="jobSearch"
+                  type="text"
+                  placeholder="Enter NRC Job No (e.g., VIP- FRENCHIE ARROW FOLDER-5)"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
+                  className="flex-1 bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                  onClick={handleSearch}
+                  disabled={isSearching || !searchTerm.trim()}
+                  className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
+                >
+                  <MagnifyingGlassIcon className="h-4 w-4" />
+                  <span>{isSearching ? 'Searching...' : 'Search'}</span>
+                </button>
+              </div>
             </div>
           </div>
 
-          {/* Custom Date Range Inputs */}
-          {dateRange === 'custom' && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-              <div>
-                <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  Start Date
-                </label>
-                <input
-                  id="startDate"
-                  type="date"
-                  value={customDateRange.start}
-                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value }))}
-                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
+          {/* Search Results */}
+          {searchResults.length > 0 && (
+            <div className="mt-4">
+              <h3 className="text-sm font-medium text-gray-700 mb-2">Search Results:</h3>
+              <div className="space-y-2">
+                {searchResults.map((job, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                      <p className="font-medium text-gray-900">{job.nrcJobNo}</p>
+                      <p className="text-sm text-gray-600">
+                        Demand: {job.jobDemand} • Steps: {job.totalSteps}
+                        {!job.hasProductionSteps && (
+                          <span className="ml-2 text-orange-600 font-medium">⚠️ No Production Steps</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => handleJobSelect(job.nrcJobNo)}
+                        className={`px-3 py-1 rounded text-sm transition-colors ${
+                          job.hasProductionSteps 
+                            ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                            : 'bg-gray-400 text-white cursor-not-allowed'
+                        }`}
+                        disabled={!job.hasProductionSteps}
+                        title={!job.hasProductionSteps ? 'This job has no production steps to view' : 'View production steps'}
+                      >
+                        {job.hasProductionSteps ? 'View Production' : 'No Production Steps'}
+                      </button>
+                      <button
+                        onClick={() => handleShowJobDetails(job.nrcJobNo)}
+                        className="bg-gray-600 hover:bg-gray-700 text-white px-3 py-1 rounded text-sm transition-colors"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
-                  End Date
-                </label>
-                <input
-                  id="endDate"
-                  type="date"
-                  value={customDateRange.end}
-                  onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value }))}
-                  className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Loading State for Jobs */}
-          {isLoadingJobs && (
-            <div className="mt-4 text-center text-sm text-gray-500">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mx-auto mb-2"></div>
-              Loading available jobs...
             </div>
           )}
 
@@ -380,7 +349,15 @@ const ProductionHeadDashboard: React.FC = () => {
                   <span className="ml-2 text-sm text-blue-600 font-mono">{selectedJob}</span>
                 </div>
                 <button
-                  onClick={() => setSelectedJob('')}
+                  onClick={() => {
+                    setSelectedJob('');
+                    setProductionData({
+                      corrugation: [],
+                      fluteLamination: [],
+                      punching: [],
+                      flapPasting: []
+                    });
+                  }}
                   className="text-blue-400 hover:text-blue-600 text-sm"
                 >
                   Clear Selection
@@ -396,8 +373,8 @@ const ProductionHeadDashboard: React.FC = () => {
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-6">
           <div className="flex space-x-1 p-1">
             {[
-              { id: 'overview', label: 'Overview', icon: ChartBarIcon },
-              { id: 'details', label: 'Production Details', icon: DocumentTextIcon },
+              { id: 'overview', label: 'Production Overview', icon: ChartBarIcon },
+              { id: 'details', label: 'Job Details', icon: DocumentTextIcon },
               { id: 'analytics', label: 'Analytics', icon: ArrowTrendingUpIcon }
             ].map((tab) => (
               <button
@@ -437,7 +414,7 @@ const ProductionHeadDashboard: React.FC = () => {
           </div>
         )}
 
-        {/* Overview Tab */}
+        {/* Overview Tab - Aggregated Data */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
             {/* Key Metrics Cards */}
@@ -445,8 +422,8 @@ const ProductionHeadDashboard: React.FC = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Production Efficiency</p>
-                    <p className="text-3xl font-bold text-blue-600">{calculateEfficiency()}%</p>
+                    <p className="text-sm font-medium text-gray-600">Overall Efficiency</p>
+                    <p className="text-3xl font-bold text-blue-600">{aggregatedData?.overallEfficiency || 0}%</p>
                   </div>
                   <div className="bg-blue-100 p-3 rounded-xl">
                     <ArrowTrendingUpIcon className="h-8 w-8 text-blue-600" />
@@ -456,7 +433,7 @@ const ProductionHeadDashboard: React.FC = () => {
                   <div className="w-full bg-gray-200 rounded-full h-2">
                     <div 
                       className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                      style={{ width: `${calculateEfficiency()}%` }}
+                      style={{ width: `${aggregatedData?.overallEfficiency || 0}%` }}
                     ></div>
                   </div>
                 </div>
@@ -465,341 +442,471 @@ const ProductionHeadDashboard: React.FC = () => {
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Total Quantity</p>
-                    <p className="text-3xl font-bold text-green-600">{calculateTotalQuantity().toLocaleString()}</p>
+                    <p className="text-sm font-medium text-gray-600">Total Jobs</p>
+                    <p className="text-3xl font-bold text-green-600">{aggregatedData?.totalJobs || 0}</p>
                   </div>
                   <div className="bg-green-100 p-3 rounded-xl">
-                    <TruckIcon className="h-8 w-8 text-green-600" />
+                    <DocumentTextIcon className="h-8 w-8 text-green-600" />
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">Units produced today</p>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Active Jobs</p>
-                    <p className="text-3xl font-bold text-purple-600">
-                      {availableJobs.filter(job => job.status === 'ACTIVE').length}
-                    </p>
-                  </div>
-                  <div className="bg-purple-100 p-3 rounded-xl">
-                    <DocumentTextIcon className="h-8 w-8 text-purple-600" />
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mt-2">Currently in production</p>
+                <p className="text-sm text-gray-500 mt-2">Jobs in system</p>
               </div>
 
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium text-gray-600">Total Production Steps</p>
+                    <p className="text-3xl font-bold text-purple-600">
+                      {aggregatedData ? 
+                        Object.values(aggregatedData.stepSummary).reduce((total, step) => total + step.total, 0) : 0
+                      }
+                    </p>
+                  </div>
+                  <div className="bg-purple-100 p-3 rounded-xl">
+                    <UserGroupIcon className="h-8 w-8 text-purple-600" />
+                  </div>
+                </div>
+                <p className="text-sm text-gray-500 mt-2">Across all jobs</p>
+              </div>
+
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Active Steps</p>
                     <p className="text-3xl font-bold text-orange-600">
-                      {Object.values(productionData).reduce((total, steps) => total + steps.length, 0)}
+                      {aggregatedData ? 
+                        Object.values(aggregatedData.stepSummary).reduce((total, step) => total + step.inProgress, 0) : 0
+                      }
                     </p>
                   </div>
                   <div className="bg-orange-100 p-3 rounded-xl">
-                    <UserGroupIcon className="h-8 w-8 text-orange-600" />
+                    <CogIcon className="h-8 w-8 text-orange-600" />
                   </div>
                 </div>
-                <p className="text-sm text-gray-500 mt-2">Operators on duty</p>
+                <p className="text-sm text-gray-500 mt-2">Currently in progress</p>
               </div>
             </div>
 
             {/* Production Steps Overview */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Production Steps Status</h2>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Production Steps Status Overview</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { 
                     name: 'Corrugation', 
-                    data: productionData.corrugation[0],
+                    key: 'corrugation',
                     color: 'blue',
                     icon: CogIcon
                   },
                   { 
                     name: 'Flute Lamination', 
-                    data: productionData.fluteLamination[0],
+                    key: 'fluteLamination',
                     color: 'green',
                     icon: BuildingOfficeIcon
                   },
                   { 
                     name: 'Punching', 
-                    data: productionData.punching[0],
+                    key: 'punching',
                     color: 'purple',
                     icon: DocumentTextIcon
                   },
                   { 
                     name: 'Flap Pasting', 
-                    data: productionData.flapPasting[0],
+                    key: 'flapPasting',
                     color: 'orange',
                     icon: TruckIcon
                   }
-                ].map((step, index) => (
-                  <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                    <div className="flex items-center space-x-3 mb-3">
-                      <div className={`bg-${step.color}-100 p-2 rounded-lg`}>
-                        <step.icon className={`h-6 w-6 text-${step.color}-600`} />
-                      </div>
-                      <div>
-                        <h3 className="font-semibold text-gray-900">{step.name}</h3>
-                        <p className="text-sm text-gray-500">Step {index + 1}</p>
-                      </div>
-                    </div>
-                    
-                    {step.data ? (
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          {getStatusIcon(step.data.status)}
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(step.data.status)}`}>
-                            {step.data.status}
-                          </span>
+                ].map((step, index) => {
+                  const stepData = aggregatedData?.stepSummary[step.key as keyof typeof aggregatedData.stepSummary];
+                  
+                  return (
+                    <div key={index} className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="flex items-center space-x-3 mb-3">
+                        <div className={`bg-${step.color}-100 p-2 rounded-lg`}>
+                          <step.icon className={`h-6 w-6 text-${step.color}-600`} />
                         </div>
-                        <p className="text-sm text-gray-600">
-                          Qty: {step.data.quantity.toLocaleString()}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {formatDate(step.data.date)}
-                        </p>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{step.name}</h3>
+                          <p className="text-sm text-gray-500">Production Step {index + 1}</p>
+                        </div>
                       </div>
-                    ) : (
-                      <div className="text-center py-4">
-                        <p className="text-sm text-gray-500">No data available</p>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                      
+                      {stepData ? (
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2 text-xs">
+                            <div className="text-center p-2 bg-green-100 rounded">
+                              <p className="font-semibold text-green-800">{stepData.completed}</p>
+                              <p className="text-green-600">Completed</p>
+                            </div>
+                            <div className="text-center p-2 bg-blue-100 rounded">
+                              <p className="font-semibold text-blue-800">{stepData.inProgress}</p>
+                              <p className="text-blue-600">In Progress</p>
+                            </div>
+                            <div className="text-center p-2 bg-gray-100 rounded">
+                              <p className="font-semibold text-gray-800">{stepData.planned}</p>
+                              <p className="text-gray-600">Planned</p>
+                            </div>
+                            <div className="text-center p-2 bg-yellow-100 rounded">
+                              <p className="font-semibold text-yellow-800">{stepData.stop}</p>
+                              <p className="text-yellow-600">Stopped</p>
+                            </div>
+                          </div>
+                          <div className="text-center pt-2 border-t border-gray-200">
+                            <p className="text-sm font-semibold text-gray-900">Total: {stepData.total}</p>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-4">
+                          <p className="text-sm text-gray-500">No data available</p>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
-
-
           </div>
         )}
 
-        {/* Production Details Tab */}
+        {/* Job Details Tab */}
         {activeTab === 'details' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Production Details - {selectedJob}</h2>
-              
-              {/* Job Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Select Job</label>
-                <select 
-                  value={selectedJob}
-                  onChange={(e) => setSelectedJob(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="">Select a job</option>
-                  {availableJobs.map((job) => (
-                    <option key={job.nrcJobNo} value={job.nrcJobNo}>
-                      {job.nrcJobNo} - {job.customerName}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Detailed Steps */}
-              <div className="space-y-6">
-                {[
-                  { 
-                    title: 'Corrugation Process', 
-                    data: productionData.corrugation[0],
-                    fields: ['machineNo', 'oprName', 'size', 'gsm1', 'gsm2', 'flute', 'shift']
-                  },
-                  { 
-                    title: 'Flute Lamination', 
-                    data: productionData.fluteLamination[0],
-                    fields: ['operatorName', 'film', 'adhesive', 'wastage', 'shift']
-                  },
-                  { 
-                    title: 'Punching Process', 
-                    data: productionData.punching[0],
-                    fields: ['operatorName', 'machine', 'die', 'wastage', 'shift']
-                  },
-                  { 
-                    title: 'Flap Pasting', 
-                    data: productionData.flapPasting[0],
-                    fields: ['operatorName', 'machineNo', 'adhesive', 'wastage', 'shift']
-                  }
-                ].map((step, index) => (
-                  <div key={index} className="border border-gray-200 rounded-lg p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="text-lg font-semibold text-gray-900">{step.title}</h3>
-                      <div className="flex items-center space-x-2">
-                        {getStatusIcon(step.data?.status || 'pending')}
-                        <span className={`px-3 py-1 rounded-full text-sm font-medium border ${getStatusColor(step.data?.status || 'pending')}`}>
-                          {step.data?.status || 'Pending'}
-                        </span>
-                      </div>
-                    </div>
-                    
-                    {step.data ? (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {step.fields.map((field) => (
-                          <div key={field} className="bg-gray-50 p-3 rounded-lg">
-                            <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">
-                              {field.replace(/([A-Z])/g, ' $1').trim()}
+            {selectedJob ? (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Production Details - {selectedJob}</h2>
+                
+                {/* Check if job has production steps */}
+                {(() => {
+                  const hasProductionSteps = productionData.corrugation.length > 0 || 
+                                           productionData.fluteLamination.length > 0 || 
+                                           productionData.punching.length > 0 || 
+                                           productionData.flapPasting.length > 0;
+                  
+                  if (!hasProductionSteps) {
+                    return (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                        <div className="flex items-center space-x-3">
+                          <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                          <div>
+                            <h3 className="text-sm font-medium text-yellow-800">No Production Steps Found</h3>
+                            <p className="text-sm text-yellow-700">
+                              This job doesn't contain the 4 production steps (Corrugation, Flute Lamination, Punching, Flap Pasting). 
+                              It may be a different type of job or use different step names.
                             </p>
-                            <p className="text-sm text-gray-900">
-                              {step.data[field] || 'N/A'}
+                            <p className="text-sm text-yellow-600 mt-1">
+                              Use the "View Details" button to see all steps for this job.
                             </p>
                           </div>
-                        ))}
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Quantity</p>
-                          <p className="text-sm text-gray-900 font-semibold">
-                            {step.data.quantity.toLocaleString()}
-                          </p>
-                        </div>
-                        <div className="bg-gray-50 p-3 rounded-lg">
-                          <p className="text-xs font-medium text-gray-600 uppercase tracking-wide mb-1">Date</p>
-                          <p className="text-sm text-gray-900">
-                            {formatDate(step.data.date)}
-                          </p>
                         </div>
                       </div>
-                    ) : (
-                      <div className="text-center py-8 text-gray-500">
-                        <DocumentTextIcon className="h-12 w-12 mx-auto mb-3 text-gray-300" />
-                        <p>No data available for this step</p>
-                      </div>
-                    )}
+                    );
+                  }
+                  return null;
+                })()}
+                
+                {isLoading ? (
+                  <div className="text-center py-8">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading production data...</p>
                   </div>
-                ))}
+                ) : (
+                  <div className="space-y-6">
+                    {[
+                      { 
+                        name: 'Corrugation', 
+                        data: productionData.corrugation,
+                        color: 'blue',
+                        icon: CogIcon
+                      },
+                      { 
+                        name: 'Flute Lamination', 
+                        data: productionData.fluteLamination,
+                        color: 'green',
+                        icon: BuildingOfficeIcon
+                      },
+                      { 
+                        name: 'Punching', 
+                        data: productionData.punching,
+                        color: 'purple',
+                        icon: DocumentTextIcon
+                      },
+                      { 
+                        name: 'Flap Pasting', 
+                        data: productionData.flapPasting,
+                        color: 'orange',
+                        icon: TruckIcon
+                      }
+                    ].map((step, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center space-x-3 mb-4">
+                          <div className={`bg-${step.color}-100 p-2 rounded-lg`}>
+                            <step.icon className={`h-6 w-6 text-${step.color}-600`} />
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900">{step.name}</h3>
+                        </div>
+                        
+                        {step.data.length > 0 ? (
+                          <div className="space-y-3">
+                            {step.data.map((stepDetail, stepIndex) => (
+                              <div key={stepIndex} className="bg-gray-50 rounded-lg p-3">
+                                <div className="flex items-center justify-between mb-2">
+                                  <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(stepDetail.status)}`}>
+                                    {getStatusIcon(stepDetail.status)}
+                                    <span className="ml-1">{stepDetail.status}</span>
+                                  </span>
+                                  <span className="text-sm text-gray-500">Step {stepDetail.stepNo}</span>
+                                </div>
+                                
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                  <div>
+                                    <p className="text-gray-600">Started: {formatDate(stepDetail.startDate)}</p>
+                                    <p className="text-gray-600">Ended: {formatDate(stepDetail.endDate)}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-gray-600">Operator: {stepDetail.user || 'Not assigned'}</p>
+                                    <p className="text-gray-600">Machine: {stepDetail.machineDetails[0]?.machineType || 'Not assigned'}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-center py-6">
+                            <p className="text-gray-500">No {step.name} steps found for this job</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 text-center">
+                <DocumentTextIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No Job Selected</h3>
+                <p className="text-gray-600 mb-4">Search for a job above to view its production details</p>
+                <div className="text-sm text-gray-500">
+                  <p>• Search by NRC Job No to find specific jobs</p>
+                  <p>• View production status for all 4 production steps</p>
+                  <p>• Monitor step progress and machine assignments</p>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
         {/* Analytics Tab */}
         {activeTab === 'analytics' && (
           <div className="space-y-6">
-            {/* Production Efficiency Chart */}
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Production Efficiency by Step</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Object.entries(productionService.getAnalyticsData(productionData).efficiencyData).map(([step, efficiency]) => (
-                  <div key={step} className="bg-gray-50 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-gray-600 capitalize">{step}</span>
-                      <span className="text-lg font-bold text-blue-600">{efficiency.toFixed(1)}%</span>
-                    </div>
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${efficiency}%` }}
-                      ></div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-6">Production Analytics</h2>
+              
+              {selectedJob ? (
+                <div className="space-y-6">
+                  <h3 className="text-lg font-medium text-gray-800">Analytics for {selectedJob}</h3>
+                  
+                  {/* Check if job has production steps */}
+                  {(() => {
+                    const hasProductionSteps = productionData.corrugation.length > 0 || 
+                                             productionData.fluteLamination.length > 0 || 
+                                             productionData.punching.length > 0 || 
+                                             productionData.flapPasting.length > 0;
+                    
+                    if (!hasProductionSteps) {
+                      return (
+                        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                          <div className="flex items-center space-x-3">
+                            <ExclamationTriangleIcon className="h-5 w-5 text-yellow-600" />
+                            <div>
+                              <h3 className="text-sm font-medium text-yellow-800">No Production Analytics Available</h3>
+                              <p className="text-sm text-yellow-700">
+                                This job doesn't contain the 4 production steps, so production analytics are not available.
+                              </p>
+                              <p className="text-sm text-yellow-600 mt-1">
+                                Use the "View Details" button to see all steps and their status for this job.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {/* Step Efficiency */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {[
+                      { name: 'Corrugation', data: productionData.corrugation },
+                      { name: 'Flute Lamination', data: productionData.fluteLamination },
+                      { name: 'Punching', data: productionData.punching },
+                      { name: 'Flap Pasting', data: productionData.flapPasting }
+                    ].map((step, index) => {
+                      const efficiency = step.data.length > 0 ? 
+                        (step.data.filter(s => s.status === 'completed').length / step.data.length) * 100 : 0;
+                      
+                      return (
+                        <div key={index} className="bg-gray-50 rounded-lg p-4 text-center">
+                          <h4 className="font-medium text-gray-900 mb-2">{step.name}</h4>
+                          <p className="text-2xl font-bold text-blue-600">{Math.round(efficiency)}%</p>
+                          <p className="text-sm text-gray-600">Efficiency</p>
+                          <div className="mt-2">
+                            <div className="w-full bg-gray-200 rounded-full h-2">
+                              <div 
+                                className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+                                style={{ width: `${efficiency}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Machine Utilization */}
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-3">Machine Utilization</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { name: 'Corrugation', data: productionData.corrugation },
+                        { name: 'Flute Lamination', data: productionData.fluteLamination },
+                        { name: 'Punching', data: productionData.punching },
+                        { name: 'Flap Pasting', data: productionData.flapPasting }
+                      ].map((step, index) => (
+                        <div key={index} className="bg-gray-50 rounded-lg p-3">
+                          <h5 className="font-medium text-gray-800 mb-2">{step.name}</h5>
+                          <div className="space-y-1">
+                            {step.data.map((stepDetail, stepIndex) => (
+                              <div key={stepIndex} className="text-sm">
+                                <span className="text-gray-600">Machine: </span>
+                                <span className="font-medium">{stepDetail.machineDetails[0]?.machineType || 'Not assigned'}</span>
+                                {stepDetail.machineDetails[0]?.machine && (
+                                  <span className="text-gray-500 ml-2">
+                                    (Capacity: {stepDetail.machineDetails[0].machine.capacity.toLocaleString()})
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                ))}
-              </div>
+                </div>
+              ) : (
+                <div className="text-center py-8">
+                  <ChartBarIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Job Selected for Analytics</h3>
+                  <p className="text-gray-600">Select a job to view detailed analytics and performance metrics</p>
+                </div>
+              )}
             </div>
+          </div>
+        )}
+      </div>
 
-            {/* Quantity Trends Chart */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Quantity Trends by Production Step</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {Object.entries(productionService.getAnalyticsData(productionData).quantityData).map(([step, quantity]) => (
-                  <div key={step} className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm font-medium text-blue-800 capitalize">{step}</p>
-                        <p className="text-2xl font-bold text-blue-600">{quantity.toLocaleString()}</p>
-                      </div>
-                      <div className="bg-blue-500 rounded-full p-2">
-                        <ChartBarIcon className="h-6 w-6 text-white" />
-                      </div>
+      {/* Detail Side Panel */}
+      {showDetailPanel && selectedJobDetails && (
+        <div className="fixed inset-0 bg-transparent bg-opacity-50 z-50 flex justify-end">
+          <div className="bg-white w-full max-w-2xl h-full overflow-y-auto shadow-2xl">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">Job Details</h2>
+                <button
+                  onClick={() => setShowDetailPanel(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="space-y-6">
+                {/* Job Info */}
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h3 className="font-semibold text-gray-900 mb-3">Job Information</h3>
+                  <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div>
+                      <p className="text-gray-600">NRC Job No:</p>
+                      <p className="font-medium text-gray-900">{selectedJobDetails.nrcJobNo}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Demand Level:</p>
+                      <p className="font-medium text-gray-900 capitalize">{selectedJobDetails.jobDemand}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Created:</p>
+                      <p className="font-medium text-gray-900">{formatDate(selectedJobDetails.createdAt)}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600">Last Updated:</p>
+                      <p className="font-medium text-gray-900">{formatDate(selectedJobDetails.updatedAt)}</p>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
+                </div>
 
-
-
-            {/* Machine Utilization */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Machine Utilization</h3>
-              <div className="space-y-4">
-                {Object.entries(productionService.getAnalyticsData(productionData).machineData).map(([step, machines]) => (
-                  <div key={step} className="border border-gray-200 rounded-lg p-4">
-                    <h4 className="text-md font-medium text-gray-700 capitalize mb-3">{step} Machines</h4>
-                    <div className="flex flex-wrap gap-2">
-                      {machines.length > 0 ? (
-                        machines.map((machine, index) => (
-                          <span 
-                            key={index}
-                            className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800 border border-green-200"
-                          >
-                            <CogIcon className="h-4 w-4 mr-1" />
-                            {machine}
+                {/* All Steps */}
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3">All Production Steps</h3>
+                  <div className="space-y-3">
+                    {selectedJobDetails.steps.map((step, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-3">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-3">
+                            <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2 py-1 rounded-full">
+                              Step {step.stepNo}
+                            </span>
+                            <h4 className="font-medium text-gray-900">{getStepDisplayName(step.stepName)}</h4>
+                          </div>
+                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(step.status)}`}>
+                            {getStatusIcon(step.status)}
+                            <span className="ml-1">{step.status}</span>
                           </span>
-                        ))
-                      ) : (
-                        <span className="text-gray-500 text-sm">No machine data available</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                          <div>
+                            <p className="text-gray-600">Started: {formatDate(step.startDate)}</p>
+                            <p className="text-gray-600">Ended: {formatDate(step.endDate)}</p>
+                          </div>
+                          <div>
+                            <p className="text-gray-600">Operator: {step.user || 'Not assigned'}</p>
+                            <p className="text-gray-600">Machine: {step.machineDetails[0]?.machineType || 'Not assigned'}</p>
+                          </div>
+                        </div>
 
-            {/* Production Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <div className="bg-blue-500 rounded-full p-3">
-                    <ClockIcon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Total Production Steps</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {Object.values(productionData).reduce((total, steps) => total + steps.length, 0)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <div className="bg-green-500 rounded-full p-3">
-                    <CheckCircleIcon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Completed Steps</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {Object.values(productionData).reduce((total, steps) => 
-                        total + steps.filter((step: ProductionStep) => step.status === 'accept').length, 0
-                      )}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-                <div className="flex items-center">
-                  <div className="bg-purple-500 rounded-full p-3">
-                    <ArrowTrendingUpIcon className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="ml-4">
-                    <p className="text-sm font-medium text-gray-600">Overall Efficiency</p>
-                    <p className="text-2xl font-bold text-gray-900">
-                      {(() => {
-                        const totalSteps = Object.values(productionData).reduce((total, steps) => total + steps.length, 0);
-                        const completedSteps = Object.values(productionData).reduce((total, steps) => 
-                          total + steps.filter((step: ProductionStep) => step.status === 'accept').length, 0
-                        );
-                        return totalSteps > 0 ? ((completedSteps / totalSteps) * 100).toFixed(1) : '0';
-                      })()}%
-                    </p>
+                        {step.machineDetails.length > 0 && step.machineDetails[0].machine && (
+                          <div className="mt-3 pt-3 border-t border-gray-200">
+                            <h5 className="font-medium text-gray-800 mb-2">Machine Details</h5>
+                            <div className="grid grid-cols-2 gap-3 text-sm">
+                              <div>
+                                <p className="text-gray-600">Machine ID:</p>
+                                <p className="font-medium">{step.machineDetails[0].machine.id}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Capacity:</p>
+                                <p className="font-medium">{step.machineDetails[0].machine.capacity.toLocaleString()}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Status:</p>
+                                <p className="font-medium capitalize">{step.machineDetails[0].machine.status}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-600">Description:</p>
+                                <p className="font-medium">{step.machineDetails[0].machine.description}</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
