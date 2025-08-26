@@ -1,14 +1,36 @@
-const API_BASE_URL = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api';
+const API_BASE_URL = 'https://nrc-backend-his4.onrender.com/api';
 
 export interface ProductionStep {
   id: number;
-  jobNrcJobNo: string;
+  stepNo: number;
+  stepName: string;
   status: string;
-  date: string;
-  shift: string | null;
-  quantity: number;
-  wastage?: number;
-  [key: string]: any;
+  startDate: string | null;
+  endDate: string | null;
+  user: string | null;
+  machineDetails: Array<{
+    unit: string | null;
+    machineId: string | number;
+    machineCode: string | null;
+    machineType: string;
+    machine?: {
+      id: string;
+      description: string;
+      status: string;
+      capacity: number;
+    };
+  }>;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface JobPlan {
+  jobPlanId: number;
+  nrcJobNo: string;
+  jobDemand: string;
+  createdAt: string;
+  updatedAt: string;
+  steps: ProductionStep[];
 }
 
 export interface ProductionData {
@@ -18,10 +40,50 @@ export interface ProductionData {
   flapPasting: ProductionStep[];
 }
 
+export interface AggregatedProductionData {
+  totalJobs: number;
+  stepSummary: {
+    corrugation: {
+      total: number;
+      planned: number;
+      start: number;
+      stop: number;
+      completed: number;
+      inProgress: number;
+    };
+    fluteLamination: {
+      total: number;
+      planned: number;
+      start: number;
+      stop: number;
+      completed: number;
+      inProgress: number;
+    };
+    punching: {
+      total: number;
+      planned: number;
+      start: number;
+      stop: number;
+      completed: number;
+      inProgress: number;
+    };
+    flapPasting: {
+      total: number;
+      planned: number;
+      start: number;
+      stop: number;
+      completed: number;
+      inProgress: number;
+    };
+  };
+  overallEfficiency: number;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   data: T;
   message?: string;
+  count?: number;
 }
 
 class ProductionService {
@@ -104,34 +166,133 @@ class ProductionService {
     }
   }
 
-  async getCorrugationByJob(jobNrcNo: string): Promise<ProductionStep[]> {
+  // Get all job plans from the comprehensive job-planning API
+  async getAllJobPlans(): Promise<JobPlan[]> {
     const timestamp = new Date().getTime();
-    return this.fetchFromApi<ProductionStep[]>(`/corrugation/by-job/${encodeURIComponent(jobNrcNo)}?t=${timestamp}`);
+    return this.fetchFromApi<JobPlan[]>(`/job-planning?t=${timestamp}`);
   }
 
-  async getFluteLaminationByJob(jobNrcNo: string): Promise<ProductionStep[]> {
-    const timestamp = new Date().getTime();
-    return this.fetchFromApi<ProductionStep[]>(`/flute-laminate-board-conversion/by-job/${encodeURIComponent(jobNrcNo)}?t=${timestamp}`);
-  }
-
-  async getPunchingByJob(jobNrcNo: string): Promise<ProductionStep[]> {
-    const timestamp = new Date().getTime();
-    return this.fetchFromApi<ProductionStep[]>(`/punching/by-job/${encodeURIComponent(jobNrcNo)}?t=${timestamp}`);
-  }
-
-  async getFlapPastingByJob(jobNrcNo: string): Promise<ProductionStep[]> {
-    const timestamp = new Date().getTime();
-    return this.fetchFromApi<ProductionStep[]>(`/side-flap-pasting/by-job/${encodeURIComponent(jobNrcNo)}?t=${timestamp}`);
-  }
-
-  async getAllProductionData(jobNrcNo: string): Promise<ProductionData> {
+  // Get specific job plan by NRC Job No
+  async getJobPlanByNrcJobNo(nrcJobNo: string): Promise<JobPlan | null> {
     try {
-      const [corrugation, fluteLamination, punching, flapPasting] = await Promise.all([
-        this.getCorrugationByJob(jobNrcNo),
-        this.getFluteLaminationByJob(jobNrcNo),
-        this.getPunchingByJob(jobNrcNo),
-        this.getFlapPastingByJob(jobNrcNo)
-      ]);
+      const allJobs = await this.getAllJobPlans();
+      const job = allJobs.find(job => job.nrcJobNo === nrcJobNo);
+      return job || null;
+    } catch (error) {
+      console.error('Error fetching job plan:', error);
+      return null;
+    }
+  }
+
+  // Get aggregated production data for all jobs (4 production steps only)
+  async getAggregatedProductionData(): Promise<AggregatedProductionData> {
+    try {
+      const allJobPlans = await this.getAllJobPlans();
+      
+      // Initialize counters for each step
+      const stepSummary = {
+        corrugation: { total: 0, planned: 0, start: 0, stop: 0, completed: 0, inProgress: 0 },
+        fluteLamination: { total: 0, planned: 0, start: 0, stop: 0, completed: 0, inProgress: 0 },
+        punching: { total: 0, planned: 0, start: 0, stop: 0, completed: 0, inProgress: 0 },
+        flapPasting: { total: 0, planned: 0, start: 0, stop: 0, completed: 0, inProgress: 0 }
+      };
+
+      let totalJobs = 0;
+      let completedSteps = 0;
+      let totalSteps = 0;
+
+      // Process each job plan
+      allJobPlans.forEach(jobPlan => {
+        totalJobs++;
+        
+        // Filter only the 4 production steps we care about
+        const productionSteps = jobPlan.steps.filter(step => 
+          step.stepName === 'Corrugation' ||
+          step.stepName === 'FluteLaminateBoardConversion' ||
+          step.stepName === 'Punching' ||
+          step.stepName === 'SideFlapPasting'
+        );
+
+        // Count statuses for each step
+        productionSteps.forEach(step => {
+          totalSteps++;
+          
+          let stepKey: keyof typeof stepSummary;
+          switch (step.stepName) {
+            case 'Corrugation':
+              stepKey = 'corrugation';
+              break;
+            case 'FluteLaminateBoardConversion':
+              stepKey = 'fluteLamination';
+              break;
+            case 'Punching':
+              stepKey = 'punching';
+              break;
+            case 'SideFlapPasting':
+              stepKey = 'flapPasting';
+              break;
+            default:
+              return; // Skip if not one of our 4 steps
+          }
+
+          stepSummary[stepKey].total++;
+          
+          switch (step.status) {
+            case 'planned':
+              stepSummary[stepKey].planned++;
+              break;
+            case 'start':
+              stepSummary[stepKey].start++;
+              stepSummary[stepKey].inProgress++;
+              break;
+            case 'stop':
+              stepSummary[stepKey].stop++;
+              stepSummary[stepKey].inProgress++;
+              break;
+            case 'completed':
+              stepSummary[stepKey].completed++;
+              completedSteps++;
+              break;
+            default:
+              stepSummary[stepKey].planned++; // Default to planned
+              break;
+          }
+        });
+      });
+
+      // Calculate overall efficiency
+      const overallEfficiency = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+
+      return {
+        totalJobs,
+        stepSummary,
+        overallEfficiency
+      };
+    } catch (error) {
+      console.error('Error fetching aggregated production data:', error);
+      throw error;
+    }
+  }
+
+  // Get production data for a specific job (4 production steps only)
+  async getProductionDataByJob(nrcJobNo: string): Promise<ProductionData> {
+    try {
+      const jobPlan = await this.getJobPlanByNrcJobNo(nrcJobNo);
+      
+      if (!jobPlan) {
+        return {
+          corrugation: [],
+          fluteLamination: [],
+          punching: [],
+          flapPasting: []
+        };
+      }
+
+      // Filter and map only the 4 production steps
+      const corrugation = jobPlan.steps.filter(step => step.stepName === 'Corrugation');
+      const fluteLamination = jobPlan.steps.filter(step => step.stepName === 'FluteLaminateBoardConversion');
+      const punching = jobPlan.steps.filter(step => step.stepName === 'Punching');
+      const flapPasting = jobPlan.steps.filter(step => step.stepName === 'SideFlapPasting');
 
       return {
         corrugation,
@@ -140,67 +301,65 @@ class ProductionService {
         flapPasting
       };
     } catch (error) {
-      console.error('Error fetching all production data:', error);
-      throw error;
+      console.error('Error fetching production data for job:', error);
+      return {
+        corrugation: [],
+        fluteLamination: [],
+        punching: [],
+        flapPasting: []
+      };
     }
   }
 
-  // Get all available active jobs from completed-jobs API
-  async getAvailableJobs(): Promise<Array<{ nrcJobNo: string; customerName: string; status: string }>> {
+  // Search jobs by NRC Job No or partial match
+  async searchJobs(searchTerm: string): Promise<Array<{ nrcJobNo: string; jobDemand: string; totalSteps: number; hasProductionSteps: boolean }>> {
     try {
-      const accessToken = localStorage.getItem('accessToken');
-      if (!accessToken) {
-        throw new Error('Authentication token not found. Please log in.');
-      }
-
-      // Add timestamp to prevent caching
-      const timestamp = new Date().getTime();
-      const response = await fetch(`${API_BASE_URL}/completed-jobs?t=${timestamp}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch jobs: ${response.status}`);
-      }
-
-      const result = await response.json();
+      const allJobs = await this.getAllJobPlans();
       
-      if (result.success && Array.isArray(result.data)) {
-        // Filter only ACTIVE jobs - status is in jobDetails.status
-        const activeJobs = result.data.filter((job: any) => job.jobDetails?.status === 'ACTIVE');
+      if (!searchTerm.trim()) {
+        return allJobs.map(job => {
+          // Check if this job has any of the 4 production steps
+          const hasProductionSteps = job.steps.some(step => 
+            step.stepName === 'Corrugation' ||
+            step.stepName === 'FluteLaminateBoardConversion' ||
+            step.stepName === 'Punching' ||
+            step.stepName === 'SideFlapPasting'
+          );
+          
+          return {
+            nrcJobNo: job.nrcJobNo,
+            jobDemand: job.jobDemand,
+            totalSteps: job.steps.length,
+            hasProductionSteps
+          };
+        });
+      }
+
+      const term = searchTerm.toLowerCase();
+      const filteredJobs = allJobs.filter(job => 
+        job.nrcJobNo.toLowerCase().includes(term)
+      );
+
+      return filteredJobs.map(job => {
+        // Check if this job has any of the 4 production steps
+        const hasProductionSteps = job.steps.some(step => 
+          step.stepName === 'Corrugation' ||
+          step.stepName === 'FluteLaminateBoardConversion' ||
+          step.stepName === 'Punching' ||
+          step.stepName === 'SideFlapPasting'
+        );
         
-        const mappedJobs = activeJobs.map((job: any) => ({
+        return {
           nrcJobNo: job.nrcJobNo,
-          customerName: job.jobDetails?.customerName || job.purchaseOrderDetails?.customer || 'N/A',
-          status: job.jobDetails?.status // Use jobDetails.status
-        }));
-        
-        return mappedJobs;
-      }
-      
-      return [];
+          jobDemand: job.jobDemand,
+          totalSteps: job.steps.length,
+          hasProductionSteps
+        };
+      });
     } catch (error) {
-      console.error('Error fetching available jobs:', error);
+      console.error('Error searching jobs:', error);
       return [];
     }
-  }
-
-  // Search jobs by NRC Job No or customer name
-  async searchJobs(searchTerm: string): Promise<Array<{ nrcJobNo: string; customerName: string; status: string }>> {
-    const allJobs = await this.getAvailableJobs();
-    if (!searchTerm.trim()) return allJobs;
-    
-    const term = searchTerm.toLowerCase();
-    return allJobs.filter(job => 
-      job.nrcJobNo.toLowerCase().includes(term) ||
-      job.customerName.toLowerCase().includes(term)
-    );
   }
 
   // Get analytics data for charts
@@ -208,44 +367,24 @@ class ProductionService {
     // Production efficiency over time
     const efficiencyData = {
       corrugation: productionData.corrugation.length > 0 ? 
-        (productionData.corrugation.filter(step => step.status === 'accept').length / productionData.corrugation.length) * 100 : 0,
+        (productionData.corrugation.filter(step => step.status === 'completed').length / productionData.corrugation.length) * 100 : 0,
       fluteLamination: productionData.fluteLamination.length > 0 ? 
-        (productionData.fluteLamination.filter(step => step.status === 'accept').length / productionData.fluteLamination.length) * 100 : 0,
+        (productionData.fluteLamination.filter(step => step.status === 'completed').length / productionData.fluteLamination.length) * 100 : 0,
       punching: productionData.punching.length > 0 ? 
-        (productionData.punching.filter(step => step.status === 'accept').length / productionData.punching.length) * 100 : 0,
+        (productionData.punching.filter(step => step.status === 'completed').length / productionData.punching.length) * 100 : 0,
       flapPasting: productionData.flapPasting.length > 0 ? 
-        (productionData.flapPasting.filter(step => step.status === 'accept').length / productionData.flapPasting.length) * 100 : 0
-    };
-
-    // Quantity trends by production step
-    const quantityData = {
-      corrugation: productionData.corrugation.reduce((sum, step) => sum + step.quantity, 0),
-      fluteLamination: productionData.fluteLamination.reduce((sum, step) => sum + step.quantity, 0),
-      punching: productionData.punching.reduce((sum, step) => sum + step.quantity, 0),
-      flapPasting: productionData.flapPasting.reduce((sum, step) => sum + step.quantity, 0)
-    };
-
-
-
-    // Shift performance (if shift data is available)
-    const shiftData = {
-      morning: 0,
-      afternoon: 0,
-      evening: 0,
-      night: 0
+        (productionData.flapPasting.filter(step => step.status === 'completed').length / productionData.flapPasting.length) * 100 : 0
     };
 
     // Machine utilization (if machine data is available)
     const machineData = {
-      corrugation: productionData.corrugation.map(step => step.machineNo || 'Unknown').filter(Boolean),
-      punching: productionData.punching.map(step => step.machine || 'Unknown').filter(Boolean),
-      flapPasting: productionData.flapPasting.map(step => step.machineNo || 'Unknown').filter(Boolean)
+      corrugation: productionData.corrugation.map(step => step.machineDetails[0]?.machineType || 'Unknown').filter(Boolean),
+      punching: productionData.punching.map(step => step.machineDetails[0]?.machineType || 'Unknown').filter(Boolean),
+      flapPasting: productionData.flapPasting.map(step => step.machineDetails[0]?.machineType || 'Unknown').filter(Boolean)
     };
 
     return {
       efficiencyData,
-      quantityData,
-      shiftData,
       machineData
     };
   }
@@ -259,29 +398,6 @@ class ProductionService {
       
       // Redirect to login page
       window.location.href = '/login';
-    }
-  }
-
-  // Get current user info for debugging
-  getCurrentUserInfo(): { hasToken: boolean; tokenExpiry?: string; userData?: any } {
-    const accessToken = localStorage.getItem('accessToken');
-    const userData = localStorage.getItem('userData');
-    
-    if (!accessToken) {
-      return { hasToken: false };
-    }
-    
-    try {
-      const tokenData = JSON.parse(atob(accessToken.split('.')[1]));
-      const expiryDate = new Date(tokenData.exp * 1000);
-      
-      return {
-        hasToken: true,
-        tokenExpiry: expiryDate.toISOString(),
-        userData: userData ? JSON.parse(userData) : null
-      };
-    } catch {
-      return { hasToken: false };
     }
   }
 
@@ -306,8 +422,6 @@ class ProductionService {
       message: 'Authenticated successfully.' 
     };
   }
-
-
 }
 
 export const productionService = new ProductionService();
