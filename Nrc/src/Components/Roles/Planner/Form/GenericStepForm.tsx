@@ -227,7 +227,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           wastage: Number(stepSpecificFormData.wastage),
           machine: stepSpecificFormData.machine,
         } as PrintingDetailsPayload;
-        put2Endpoint = `https://nrc-backend-his4.onrender.com/api/printing-details/${nrcJobNo}`;
+        put2Endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/printing-details/${nrcJobNo}`;
         break;
       case 'Corrugation':
         put2Payload = {
@@ -243,7 +243,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           remarks: stepSpecificFormData.remarks,
           qcCheckSignBy: stepSpecificFormData.qcCheckSignBy,
         } as CorrugationPayload;
-        put2Endpoint = `https://nrc-backend-his4.onrender.com/api/corrugation/${nrcJobNo}`;
+        put2Endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/corrugation/${nrcJobNo}`;
         break;
       case 'FluteLamination':
         put2Payload = {
@@ -256,7 +256,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           adhesive: stepSpecificFormData.adhesive,
           wastage: Number(stepSpecificFormData.wastage),
         } as FluteLaminationPayload;
-        put2Endpoint = `https://nrc-backend-his4.onrender.com/api/flute-laminate-board-conversion/${nrcJobNo}`;
+        put2Endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/flute-laminate-board-conversion/${nrcJobNo}`;
         break;
       case 'Punching':
         put2Payload = {
@@ -268,7 +268,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           wastage: Number(stepSpecificFormData.wastage),
           remarks: stepSpecificFormData.remarks,
         } as PunchingPayload;
-        put2Endpoint = `https://nrc-backend-his4.onrender.com/api/punching/${nrcJobNo}`;
+        put2Endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/punching/${nrcJobNo}`;
         break;
       case 'FlapPasting':
         put2Payload = {
@@ -282,7 +282,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           remarks: stepSpecificFormData.remarks,
           user: empId, // Emp Id is passed here
         } as FlapPastingPayload;
-        put2Endpoint = `https://nrc-backend-his4.onrender.com/api/side-flap-pasting/${nrcJobNo}`;
+        put2Endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/side-flap-pasting/${nrcJobNo}`;
         break;
       case 'QualityDept':
         put2Payload = {
@@ -293,7 +293,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           reasonForRejection: stepSpecificFormData.reasonForRejection,
           remarks: stepSpecificFormData.remarks,
         } as QCDetailsPayload;
-        put2Endpoint = `https://nrc-backend-his4.onrender.com/api/quality-dept/${nrcJobNo}`;
+        put2Endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/quality-dept/${nrcJobNo}`;
         break;
       case 'DispatchProcess':
         put2Payload = {
@@ -305,7 +305,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           balanceQty: Number(stepSpecificFormData.balanceQty),
           remarks: stepSpecificFormData.remarks,
         } as DispatchDetailsPayload;
-        put2Endpoint = `https://nrc-backend-his4.onrender.com/api/dispatch-process/${nrcJobNo}`;
+        put2Endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/dispatch-process/${nrcJobNo}`;
         break;
       default:
         setError('Unsupported step type for completion.');

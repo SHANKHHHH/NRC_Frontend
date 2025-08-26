@@ -59,28 +59,28 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           let endpoint = '';
           switch (stepName) {
             case 'PaperStore':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/paper-store/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'Corrugation':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/corrugation/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/corrugation/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'PrintingDetails':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/printing-details/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/printing-details/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'FluteLamination':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/flute-laminate-board-conversion/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/flute-laminate-board-conversion/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'Punching':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/punching/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/punching/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'FlapPasting':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/side-flap-pasting/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/side-flap-pasting/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'QualityDept':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/quality-dept/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/quality-dept/by-job/${encodedJobNrcJobNo}`;
               break;
             case 'DispatchProcess':
-              endpoint = `https://nrc-backend-his4.onrender.com/api/dispatch-process/by-job/${encodedJobNrcJobNo}`;
+              endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/dispatch-process/by-job/${encodedJobNrcJobNo}`;
               break;
             default:
               return null;
@@ -125,7 +125,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const jobPlanningEndpoint = `https://nrc-backend-his4.onrender.com/api/job-planning/`;
+      const jobPlanningEndpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/`;
       console.log(`🔍 [fetchJobPlanDetails] - Endpoint: ${jobPlanningEndpoint}`);
       console.log(`🔍 [fetchJobPlanDetails] - Method: GET`);
       console.log(`🔍 [fetchJobPlanDetails] - Job Plan ID from URL: ${jobPlanId}`);
@@ -227,7 +227,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
       console.log('🔍 [updateJobPlanStepStatus] - New Status:', newStatus);
       
       // Try using jobPlanId only in the path (backend might not support nrcJobNo in path)
-      const url = `https://nrc-backend-his4.onrender.com/api/job-planning/${jobPlan.nrcJobNo}/steps/${step.stepNo}`;
+      const url = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/${jobPlan.nrcJobNo}/steps/${step.stepNo}`;
       console.log('🔍 [updateJobPlanStepStatus] - Full URL being called:', url);
       
       // First PUT request to update step status
@@ -293,7 +293,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
       // Determine endpoint and payload based on step type
       switch (step.stepName) {
         case 'PaperStore':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/paper-store';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store';
           console.log(`📝 [createStepSpecificRecord] - PAPER STORE step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -309,7 +309,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           };
           break;
         case 'Corrugation':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/corrugation';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/corrugation';
           console.log(`📝 [createStepSpecificRecord] - CORRUGATION step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -328,7 +328,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           };
           break;
         case 'PrintingDetails':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/printing-details';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/printing-details';
           console.log(`📝 [createStepSpecificRecord] - PRINTING DETAILS step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -347,7 +347,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           };
           break;
         case 'FluteLamination':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/flute-laminate-board-conversion';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/flute-laminate-board-conversion';
           console.log(`📝 [createStepSpecificRecord] - FLUTE LAMINATION step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -363,7 +363,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           };
           break;
         case 'Punching':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/punching';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/punching';
           console.log(`📝 [createStepSpecificRecord] - PUNCHING step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -380,7 +380,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           };
           break;
         case 'FlapPasting':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/side-flap-pasting';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/side-flap-pasting';
           console.log(`📝 [createStepSpecificRecord] - FLAP PASTING step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -397,7 +397,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           };
           break;
         case 'QualityDept':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/quality-dept';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/quality-dept';
           console.log(`📝 [createStepSpecificRecord] - QUALITY DEPT step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -414,7 +414,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           };
           break;
         case 'DispatchProcess':
-          endpoint = 'https://nrc-backend-his4.onrender.com/api/dispatch-process';
+          endpoint = 'http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/dispatch-process';
           console.log(`📝 [createStepSpecificRecord] - DISPATCH PROCESS step detected`);
           console.log(`📝 [createStepSpecificRecord] - POST endpoint: ${endpoint}`);
           payload = {
@@ -511,7 +511,7 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
       console.log('🔍 [handleUpdateStepProperty] - Property:', property);
       console.log('🔍 [handleUpdateStepProperty] - Value:', value);
       // Try using jobPlanId only in the path (backend might not support nrcJobNo in path)
-      const endpoint = `https://nrc-backend-his4.onrender.com/api/job-planning/${encodeURIComponent(jobPlan.nrcJobNo)}/steps/${stepNo}`;
+      const endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/${encodeURIComponent(jobPlan.nrcJobNo)}/steps/${stepNo}`;
       console.log('🔍 [handleUpdateStepProperty] - Full Endpoint:', endpoint);
       const response = await fetch(endpoint, {
         method: 'PUT',
@@ -641,8 +641,8 @@ const JobStepsView: React.FC<JobStepsViewProps> = () => {
           
           // Use the step-specific record ID if available, otherwise use the by-job endpoint
           const endpoint = stepToEdit.paperStoreDetails?.id 
-            ? `https://nrc-backend-his4.onrender.com/api/paper-store/${stepToEdit.paperStoreDetails.id}`
-            : `https://nrc-backend-his4.onrender.com/api/paper-store/by-job/${encodeURIComponent(jobPlan.nrcJobNo)}`;
+            ? `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store/${stepToEdit.paperStoreDetails.id}`
+            : `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store/by-job/${encodeURIComponent(jobPlan.nrcJobNo)}`;
           
           console.log('🔍 [PaperStore onCompleteWork] - Using endpoint:', endpoint);
           return handleCompleteWork(stepToEdit, payload, endpoint, stepToEdit.user || '');

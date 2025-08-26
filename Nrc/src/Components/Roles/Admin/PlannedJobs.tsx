@@ -43,7 +43,7 @@ const PlannedJobs: React.FC = () => {
       if (!accessToken) throw new Error('Authentication token not found.');
 
       // Fetch job planning data
-      const jobPlanningResponse = await fetch('https://nrc-backend-his4.onrender.com/api/job-planning/', {
+      const jobPlanningResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 

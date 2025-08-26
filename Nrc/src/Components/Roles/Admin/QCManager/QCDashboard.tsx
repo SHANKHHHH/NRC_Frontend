@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  TruckIcon, 
   CheckCircleIcon, 
+  XCircleIcon, 
   ClockIcon, 
-  ExclamationTriangleIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
-  EyeIcon
+  EyeIcon,
+  ExclamationTriangleIcon,
+  ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
-import { dispatchService, type DispatchProcess, type DispatchData } from './dispatchService';
+import { qcService, type QCData, type QCSummary } from './qcService';
 
-const DispatchOverview: React.FC = () => {
-  const [dispatchData, setDispatchData] = useState<DispatchProcess[]>([]);
+const QCDashboard: React.FC = () => {
+  const [qcData, setQcData] = useState<QCData[]>([]);
+  const [summaryData, setSummaryData] = useState<QCSummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [selectedDispatch, setSelectedDispatch] = useState<DispatchProcess | null>(null);
+  const [selectedQC, setSelectedQC] = useState<QCData | null>(null);
   const [showDetailPanel, setShowDetailPanel] = useState(false);
   const [showAllData, setShowAllData] = useState(false);
 
@@ -23,10 +25,14 @@ const DispatchOverview: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const data = await dispatchService.getAllDispatchProcesses();
-        setDispatchData(data);
+        const [data, summary] = await Promise.all([
+          qcService.getAllQCData(),
+          qcService.getQCStatistics()
+        ]);
+        setQcData(data);
+        setSummaryData(summary);
       } catch (error) {
-        console.error('Error loading dispatch data:', error);
+        console.error('Error loading QC data:', error);
       } finally {
         setLoading(false);
       }
@@ -34,31 +40,21 @@ const DispatchOverview: React.FC = () => {
     loadData();
   }, []);
 
-  // Calculate summary data
-  const summaryData: DispatchData = {
-    totalDispatches: dispatchData.length,
-    totalQuantityDispatched: dispatchData.reduce((sum, item) => sum + item.quantity, 0),
-    totalBalanceQuantity: dispatchData.reduce((sum, item) => sum + item.balanceQty, 0),
-    completedDispatches: dispatchData.filter(item => item.status === 'accept').length,
-    pendingDispatches: dispatchData.filter(item => item.status === 'pending').length,
-    rejectedDispatches: dispatchData.filter(item => item.status === 'rejected').length,
-  };
-
   // Filter data based on search and status
-  const filteredData = dispatchData.filter(item => {
+  const filteredData = qcData.filter(item => {
     const matchesSearch = 
       item.jobNrcJobNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.dispatchNo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.operatorName.toLowerCase().includes(searchTerm.toLowerCase());
+      item.operatorName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.checkedBy.toLowerCase().includes(searchTerm.toLowerCase());
     
     const matchesStatus = statusFilter === 'all' || item.status === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
 
-  // Sort by dispatch date (latest first) and limit to 5 items
+  // Sort by date (latest first) and limit to 5 items
   const sortedData = filteredData
-    .sort((a, b) => new Date(b.dispatchDate).getTime() - new Date(a.dispatchDate).getTime());
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   
   // Show all data or limit to 5 based on state
   const displayData = showAllData ? sortedData : sortedData.slice(0, 5);
@@ -71,7 +67,7 @@ const DispatchOverview: React.FC = () => {
       case 'pending':
         return { color: 'bg-yellow-100 text-yellow-800 border-yellow-200', label: 'Pending', icon: ClockIcon };
       case 'rejected':
-        return { color: 'bg-red-100 text-red-800 border-red-200', label: 'Rejected', icon: ExclamationTriangleIcon };
+        return { color: 'bg-red-100 text-red-800 border-red-200', label: 'Rejected', icon: XCircleIcon };
       default:
         return { color: 'bg-gray-100 text-gray-800 border-gray-200', label: 'Unknown', icon: ExclamationTriangleIcon };
     }
@@ -89,53 +85,67 @@ const DispatchOverview: React.FC = () => {
   };
 
   // Handle row click to show details
-  const handleRowClick = (dispatch: DispatchProcess) => {
-    setSelectedDispatch(dispatch);
+  const handleRowClick = (qc: QCData) => {
+    setSelectedQC(qc);
     setShowDetailPanel(true);
   };
 
   // Close detail panel
   const closeDetailPanel = () => {
     setShowDetailPanel(false);
-    setSelectedDispatch(null);
+    setSelectedQC(null);
+  };
+
+  // Refresh data
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const [data, summary] = await Promise.all([
+        qcService.getAllQCData(),
+        qcService.getQCStatistics()
+      ]);
+      setQcData(data);
+      setSummaryData(summary);
+    } catch (error) {
+      console.error('Error refreshing QC data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen  flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Loading Dispatch Dashboard...</p>
+          <p className="text-lg text-gray-600">Loading QC Dashboard...</p>
         </div>
       </div>
     );
   }
 
   // Show message when no data is available
-  if (dispatchData.length === 0) {
+  if (qcData.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
+      <div className="min-h-screen  p-6">
         <div className="mb-8">
           <div className="flex items-center space-x-4 mb-2">
             <div className="bg-blue-500 p-3 rounded-xl">
-              <TruckIcon className="h-4 w-4 text-white" />
+              <ClipboardDocumentCheckIcon className="h-8 w-8 text-white" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Dispatch Head Dashboard</h1>
-              <p className="text-gray-600 text-lg">Monitor and manage all dispatch operations</p>
+              
+              <p className="text-gray-600 text-lg">Monitor and manage quality control operations</p>
             </div>
           </div>
         </div>
         
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-12 text-center">
-          <TruckIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-          <h3 className="text-xl font-semibold text-gray-900 mb-2">No Dispatch Data Available</h3>
-          <p className="text-gray-600 mb-4">No dispatch processes found in the system.</p>
+          <ClipboardDocumentCheckIcon className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <h3 className="text-xl font-semibold text-gray-900 mb-2">No QC Data Available</h3>
+          <p className="text-gray-600 mb-4">No quality control checks found in the system.</p>
           <button
-            onClick={() => {
-              setLoading(true);
-              dispatchService.getAllDispatchProcesses().then(setDispatchData).finally(() => setLoading(false));
-            }}
+            onClick={handleRefresh}
             className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
           >
             Refresh Data
@@ -146,24 +156,21 @@ const DispatchOverview: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screenp-6">
+    <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
             <div className="bg-blue-500 p-3 rounded-xl">
-              <TruckIcon className="h-8 w-8 text-white" />
+              <ClipboardDocumentCheckIcon className="h-8 w-8 text-white" />
             </div>
             <div>
              
-              <p className="text-gray-600 text-lg">Monitor and manage all dispatch operations</p>
+              <p className="text-gray-600 text-lg">Monitor and manage quality control operations</p>
             </div>
           </div>
           <button
-            onClick={() => {
-              setLoading(true);
-              dispatchService.getAllDispatchProcesses().then(setDispatchData).finally(() => setLoading(false));
-            }}
+            onClick={handleRefresh}
             disabled={loading}
             className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
           >
@@ -185,15 +192,15 @@ const DispatchOverview: React.FC = () => {
       </div>
 
       {/* Summary KPI Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7 gap-6 mb-8">
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Dispatches</p>
-              <p className="text-xl font-bold text-blue-600">{summaryData.totalDispatches}</p>
+              <p className="text-sm font-medium text-gray-600">Total QC Checks</p>
+              <p className="text-xl font-bold text-blue-600">{summaryData?.totalQCChecks || 0}</p>
             </div>
             <div className="bg-blue-100 p-3 rounded-xl">
-              <TruckIcon className="h-4 w-4 text-blue-600" />
+              <ClipboardDocumentCheckIcon className="h-4 w-4 text-blue-600" />
             </div>
           </div>
         </div>
@@ -201,8 +208,20 @@ const DispatchOverview: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Quantity Dispatched</p>
-              <p className="text-l font-bold text-green-600">{summaryData.totalQuantityDispatched.toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-600">Quantity Checked</p>
+              <p className="text-xl font-bold text-indigo-600">{(summaryData?.totalQuantityChecked || 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-indigo-100 p-3 rounded-xl">
+              <ClipboardDocumentCheckIcon className="h-4 w-4 text-indigo-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Accepted Qty</p>
+              <p className="text-xl font-bold text-green-600">{(summaryData?.totalAcceptedQuantity || 0).toLocaleString()}</p>
             </div>
             <div className="bg-green-100 p-3 rounded-xl">
               <CheckCircleIcon className="h-4 w-4 text-green-600" />
@@ -213,11 +232,23 @@ const DispatchOverview: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Balance Qty</p>
-              <p className="text-xl font-bold text-orange-600">{summaryData.totalBalanceQuantity.toLocaleString()}</p>
+              <p className="text-sm font-medium text-gray-600">Rejected Qty</p>
+              <p className="text-xl font-bold text-red-600">{(summaryData?.totalRejectedQuantity || 0).toLocaleString()}</p>
+            </div>
+            <div className="bg-red-100 p-3 rounded-xl">
+              <XCircleIcon className="h-4 w-4 text-red-600" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Rejection %</p>
+              <p className="text-xl font-bold text-orange-600">{summaryData?.rejectionPercentage || 0}%</p>
             </div>
             <div className="bg-orange-100 p-3 rounded-xl">
-              <ClockIcon className="h-4 w-4 text-orange-600" />
+              <ExclamationTriangleIcon className="h-4 w-4 text-orange-600" />
             </div>
           </div>
         </div>
@@ -225,11 +256,12 @@ const DispatchOverview: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Completed</p>
-              <p className="text-xl font-bold text-green-600">{summaryData.completedDispatches}</p>
+              <p className="text-sm font-medium text-gray-600">Top Reason</p>
+              <p className="text-lg font-bold text-gray-900 truncate">{summaryData?.topRejectionReason || 'N/A'}</p>
+              <p className="text-sm text-gray-500">{(summaryData?.topRejectionCount || 0).toLocaleString()} qty</p>
             </div>
-            <div className="bg-green-100 p-3 rounded-xl">
-              <CheckCircleIcon className="h-4 w-4 text-green-600" />
+            <div className="bg-gray-100 p-3 rounded-xl">
+              <ExclamationTriangleIcon className="h-8 w-8 text-gray-600" />
             </div>
           </div>
         </div>
@@ -237,23 +269,11 @@ const DispatchOverview: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Pending</p>
-              <p className="text-xl font-bold text-yellow-600">{summaryData.pendingDispatches}</p>
+              <p className="text-sm font-medium text-gray-600">Pending Checks</p>
+              <p className="text-xl font-bold text-yellow-600">{qcData.filter(item => item.status === 'pending').length}</p>
             </div>
             <div className="bg-yellow-100 p-3 rounded-xl">
               <ClockIcon className="h-4 w-4 text-yellow-600" />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Rejected</p>
-              <p className="text-xl font-bold text-red-600">{summaryData.rejectedDispatches}</p>
-            </div>
-            <div className="bg-red-100 p-3 rounded-xl">
-              <ExclamationTriangleIcon className="h-4 w-4 text-red-600" />
             </div>
           </div>
         </div>
@@ -267,7 +287,7 @@ const DispatchOverview: React.FC = () => {
               <MagnifyingGlassIcon className="h-5 w-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search by Job No, Dispatch No, or Operator..."
+                placeholder="Search by Job No, Operator, or Checked By..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -288,15 +308,15 @@ const DispatchOverview: React.FC = () => {
             </div>
           </div>
           <div className="text-sm text-gray-500">
-            Showing {displayData.length} of {filteredData.length} dispatches ({showAllData ? 'all' : 'latest 5'} by dispatch date)
+            Showing {displayData.length} of {filteredData.length} QC checks ({showAllData ? 'all' : 'latest 5'} by date)
           </div>
         </div>
       </div>
 
-      {/* Dispatch Details Table */}
+      {/* QC Details Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Dispatch Details</h3>
+          <h3 className="text-lg font-semibold text-gray-900">QC Details</h3>
           <p className="text-sm text-gray-600">Click on any row to view detailed information</p>
         </div>
         
@@ -304,14 +324,14 @@ const DispatchOverview: React.FC = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dispatch No</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job No</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dispatch Date</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Balance Qty</th>
-                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">QC Date</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Checked By</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operator</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rejected Qty</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rejection %</th>
+                <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                 <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -320,62 +340,58 @@ const DispatchOverview: React.FC = () => {
                 <tr>
                   <td colSpan={9} className="px-6 py-8 text-center text-gray-500">
                     <div className="flex flex-col items-center space-y-2">
-                      <TruckIcon className="h-8 w-8 text-gray-300" />
-                      <p>No dispatches found matching the current filters</p>
+                      <ClipboardDocumentCheckIcon className="h-8 w-8 text-gray-300" />
+                      <p>No QC checks found matching the current filters</p>
                       <p className="text-sm text-gray-400">Try adjusting your search or filter criteria</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                displayData.map((dispatch: DispatchProcess) => {
-                  const statusInfo = getStatusInfo(dispatch.status);
+                displayData.map((qc) => {
+                  const statusInfo = getStatusInfo(qc.status);
                   const StatusIcon = statusInfo.icon;
+                  const rejectionPercentage = qc.quantity > 0 ? (qc.rejectedQty / qc.quantity) * 100 : 0;
                   
                   return (
                     <tr 
-                      key={dispatch.id} 
+                      key={qc.id} 
                       className="hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => handleRowClick(dispatch)}
+                      onClick={() => handleRowClick(qc)}
                     >
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900 font-mono">{dispatch.dispatchNo || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 font-mono">{dispatch.jobNrcJobNo}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900 max-w-xs truncate">
-                          {dispatch.jobNrcJobNo.split('–')[1]?.trim() || 'N/A'}
-                        </div>
+                        <div className="text-sm font-medium text-gray-900 font-mono">{qc.jobNrcJobNo}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {formatDate(dispatch.dispatchDate)}
+                        {formatDate(qc.date)}
                       </td>
-                                           <td className="px-6 py-4 whitespace-nowrap text-center">
-                       <div className="text-sm font-medium text-gray-900">{dispatch.quantity.toLocaleString()}</div>
-                     </td>
-                     <td className="px-6 py-4 whitespace-nowrap text-center">
-                       <div className="flex flex-col items-center space-y-1">
-                         <div className="text-sm font-medium text-gray-900">{dispatch.balanceQty.toLocaleString()}</div>
-                         <div className="w-20 bg-gray-200 rounded-full h-2">
-                           <div 
-                             className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                             style={{ width: `${((dispatch.quantity - dispatch.balanceQty) / dispatch.quantity) * 100}%` }}
-                           ></div>
-                         </div>
-                         <div className="text-xs text-gray-500">
-                           {Math.round(((dispatch.quantity - dispatch.balanceQty) / dispatch.quantity) * 100)}%
-                         </div>
-                       </div>
-                     </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {qc.checkedBy}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        {qc.operatorName}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="text-sm font-medium text-gray-900">{qc.quantity.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="text-sm font-medium text-gray-900">{qc.rejectedQty.toLocaleString()}</div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-center">
+                        <div className="flex flex-col items-center space-y-1">
+                          <div className="text-sm font-medium text-gray-900">{rejectionPercentage.toFixed(1)}%</div>
+                          <div className="w-20 bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-red-600 h-2 rounded-full transition-all duration-300"
+                              style={{ width: `${Math.min(rejectionPercentage, 100)}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium border ${statusInfo.color}`}>
                           <StatusIcon className="h-4 w-4 mr-1" />
                           {statusInfo.label}
                         </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {dispatch.operatorName || 'N/A'}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
                         <button className="text-blue-600 hover:text-blue-800 transition-colors">
@@ -396,8 +412,8 @@ const DispatchOverview: React.FC = () => {
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600">
                 {showAllData 
-                  ? `Showing all ${displayData.length} dispatches` 
-                  : `Showing latest 5 of ${filteredData.length} dispatches`
+                  ? `Showing all ${displayData.length} QC checks` 
+                  : `Showing latest 5 of ${filteredData.length} QC checks`
                 }
               </p>
               <button
@@ -412,12 +428,12 @@ const DispatchOverview: React.FC = () => {
       </div>
 
       {/* Detail Side Panel */}
-      {showDetailPanel && selectedDispatch && (
-        <div className="fixed inset-0 bg-transparent bg-opacity-50 z-50 flex justify-end">
+      {showDetailPanel && selectedQC && (
+        <div className="fixed inset-0  bg-opacity-50 z-50 flex justify-end">
           <div className="bg-white w-full max-w-md h-full overflow-y-auto shadow-2xl">
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-semibold text-gray-900">Dispatch Details</h3>
+                <h3 className="text-xl font-semibold text-gray-900">QC Details</h3>
                 <button
                   onClick={closeDetailPanel}
                   className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -430,20 +446,16 @@ const DispatchOverview: React.FC = () => {
 
               <div className="space-y-6">
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Dispatch Information</h4>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Job Information</h4>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Dispatch No:</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedDispatch.dispatchNo || 'N/A'}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Job No:</span>
-                      <span className="text-sm font-medium text-gray-900 font-mono">{selectedDispatch.jobNrcJobNo}</span>
+                      <span className="text-sm font-medium text-gray-900 font-mono">{selectedQC.jobNrcJobNo}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Status:</span>
-                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusInfo(selectedDispatch.status).color}`}>
-                        {getStatusInfo(selectedDispatch.status).label}
+                      <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getStatusInfo(selectedQC.status).color}`}>
+                        {getStatusInfo(selectedQC.status).label}
                       </span>
                     </div>
                   </div>
@@ -453,40 +465,64 @@ const DispatchOverview: React.FC = () => {
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Quantity Details</h4>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Quantity:</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedDispatch.quantity.toLocaleString()}</span>
+                      <span className="text-sm text-gray-600">Total Quantity:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedQC.quantity.toLocaleString()}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Balance Qty:</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedDispatch.balanceQty.toLocaleString()}</span>
+                      <span className="text-sm text-gray-600">Rejected Quantity:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedQC.rejectedQty.toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Accepted Quantity:</span>
+                      <span className="text-sm font-medium text-gray-900">{(selectedQC.quantity - selectedQC.rejectedQty).toLocaleString()}</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
-                        className="bg-blue-600 h-2 rounded-full transition-all duration-300"
-                        style={{ width: `${((selectedDispatch.quantity - selectedDispatch.balanceQty) / selectedDispatch.quantity) * 100}%` }}
+                        className="bg-red-600 h-2 rounded-full transition-all duration-300"
+                        style={{ width: `${(selectedQC.rejectedQty / selectedQC.quantity) * 100}%` }}
                       ></div>
                     </div>
                     <div className="text-xs text-gray-500 text-center">
-                      {selectedDispatch.quantity - selectedDispatch.balanceQty} of {selectedDispatch.quantity} dispatched
+                      {((selectedQC.rejectedQty / selectedQC.quantity) * 100).toFixed(1)}% rejected
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Operational Details</h4>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">QC Information</h4>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Checked By:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedQC.checkedBy}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Operator:</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedDispatch.operatorName || 'N/A'}</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedQC.operatorName}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-sm text-gray-600">Shift:</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedDispatch.shift || 'N/A'}</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedQC.shift || 'N/A'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">QC Check By:</span>
-                      <span className="text-sm font-medium text-gray-900">{selectedDispatch.qcCheckSignBy || 'N/A'}</span>
+                      <span className="text-sm text-gray-600">QC Sign By:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedQC.qcCheckSignBy || 'N/A'}</span>
                     </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="text-sm font-medium text-gray-500 mb-2">Rejection Details</h4>
+                  <div className="bg-gray-50 rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between">
+                      <span className="text-sm text-gray-600">Reason:</span>
+                      <span className="text-sm font-medium text-gray-900">{selectedQC.reasonForRejection}</span>
+                    </div>
+                    {selectedQC.remarks && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">Remarks:</span>
+                        <span className="text-sm font-medium text-gray-900">{selectedQC.remarks}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -494,24 +530,11 @@ const DispatchOverview: React.FC = () => {
                   <h4 className="text-sm font-medium text-gray-500 mb-2">Timeline</h4>
                   <div className="bg-gray-50 rounded-lg p-4 space-y-3">
                     <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Created:</span>
-                      <span className="text-sm font-medium text-gray-900">{formatDate(selectedDispatch.date)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-gray-600">Dispatch Date:</span>
-                      <span className="text-sm font-medium text-gray-900">{formatDate(selectedDispatch.dispatchDate)}</span>
+                      <span className="text-sm text-gray-600">QC Date:</span>
+                      <span className="text-sm font-medium text-gray-900">{formatDate(selectedQC.date)}</span>
                     </div>
                   </div>
                 </div>
-
-                {selectedDispatch.remarks && (
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">Remarks</h4>
-                    <div className="bg-gray-50 rounded-lg p-4">
-                      <p className="text-sm text-gray-900">{selectedDispatch.remarks}</p>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -521,4 +544,4 @@ const DispatchOverview: React.FC = () => {
   );
 };
 
-export default DispatchOverview;
+export default QCDashboard; 

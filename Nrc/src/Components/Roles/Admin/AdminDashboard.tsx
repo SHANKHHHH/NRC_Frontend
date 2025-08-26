@@ -6,9 +6,9 @@ import LineChartComponent from './ChartComponents/LineChartComponent';
 import BarChartComponent from './ChartComponents/BarChartComponent';
 import PieChartComponent from './ChartComponents/PieChartComponent';
 import AdvancedDataChart from './ChartComponents/AdvancedDataChart';
-import CompletedJobsChart from './ChartComponents/CompletedJobsChart';
 import JobPlansTable from './DataTable/JobPlansTable';
 import { useNavigate } from 'react-router-dom';
+import CompletedJobsTable from './CompletedJobsTable';
 
 // Types based on the API response structure
 interface JobPlanStep {
@@ -53,14 +53,37 @@ interface CompletedJob {
   jobPlanId: number;
   jobDemand: string;
   jobDetails: {
+    id: number;
+    customerName: string;
     preRate: number;
-    unit?: string;
+    latestRate: number;
+    [key: string]: any;
   };
   purchaseOrderDetails: {
-    poDate: string;
-    totalPOQuantity: number;
+    id: number;
+    customer: string;
     unit: string;
+    [key: string]: any;
   };
+  allSteps: Array<{
+    id: number;
+    stepName: string;
+    machineDetails: Array<{
+      unit: string | null;
+      machineId: string;
+      machineCode: string | null;
+      machineType: string;
+    }>;
+    dispatchProcess?: {
+      id: number;
+      quantity: number;
+      [key: string]: any;
+    };
+    [key: string]: any;
+  }>;
+  completedAt: string;
+  completedBy: string;
+  [key: string]: any;
 }
 
 interface AdminDashboardData {
@@ -161,28 +184,28 @@ const AdminDashboard: React.FC = () => {
       let endpoint = '';
       switch (stepName) {
         case 'PaperStore':
-          endpoint = `https://nrc-backend-his4.onrender.com/api/paper-store/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'PrintingDetails':
-          endpoint = `https://nrc-backend-his4.onrender.com/api/printing-details/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/printing-details/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'Corrugation':
-          endpoint = `https://nrc-backend-his4.onrender.com/api/corrugation/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/corrugation/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'FluteLaminateBoardConversion':
-          endpoint = `https://nrc-backend-his4.onrender.com/api/flute-laminate-board-conversion/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/flute-laminate-board-conversion/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'Punching':
-          endpoint = `https://nrc-backend-his4.onrender.com/api/punching/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/punching/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'SideFlapPasting':
-          endpoint = `https://nrc-backend-his4.onrender.com/api/side-flap-pasting/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/side-flap-pasting/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'QualityDept':
-          endpoint = `https://nrc-backend-his4.onrender.com/api/quality-dept/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/quality-dept/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'DispatchProcess':
-          endpoint = `https://nrc-backend-his4.onrender.com/api/dispatch-process/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/dispatch-process/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         default:
           return null;
@@ -217,7 +240,7 @@ const AdminDashboard: React.FC = () => {
       if (!accessToken) throw new Error('Authentication token not found.');
 
       // Fetch job planning data
-      const jobPlanningResponse = await fetch('https://nrc-backend-his4.onrender.com/api/job-planning/', {
+      const jobPlanningResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
@@ -228,7 +251,7 @@ const AdminDashboard: React.FC = () => {
       const jobPlanningResult = await jobPlanningResponse.json();
       
       // Fetch completed jobs data
-      const completedJobsResponse = await fetch('https://nrc-backend-his4.onrender.com/api/completed-jobs', {
+      const completedJobsResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/completed-jobs', {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
@@ -825,11 +848,10 @@ const AdminDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Completed Jobs Analysis Chart */}
+      {/* Completed Jobs Analysis Table - Replaced chart with table */}
       {filteredData.completedJobsData && filteredData.completedJobsData.length > 0 && (
-        <CompletedJobsChart
+        <CompletedJobsTable
           data={filteredData.completedJobsData}
-          height={450}
           className="mb-8"
         />
       )}

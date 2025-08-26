@@ -1,23 +1,23 @@
 // Nrc/src/Pages/Dashboard/Dashboard.tsx
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 // Import the Job interface from the centralized types file
-import { type Job } from '../../Components/Roles/Planner/Types/job.ts'; // Corrected path to the Job interface
 
-const OrderSummary = lazy(() => import('../../Components/Roles/Admin/Planner/OrderSummary'));
-const ProductionSchedule = lazy(() => import('../../Components/Roles/Admin/Planner/ProductionSchedule'));
-const Summary = lazy(() => import('../../Components/Roles/Admin/Production_Head/Summary'));
-const ProductionUpdate = lazy(() => import('../../Components/Roles/Admin/Production_Head/ProductionUpdate'));
+
+const PlannerDashboardContainer = lazy(() => import('../../Components/Roles/Admin/Planner/PlannerDashboardContainer'));
+
 const DispatchOverview = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchOverview'));
-const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchSummary'));
+const QCDashboard = lazy(() => import('../../Components/Roles/Admin/QCManager/QCDashboard'));
+const PrintingDashboard = lazy(() => import('../../Components/Roles/Admin/PrintingManager/PrintingDashboard'));
 const AdminDashboard = lazy(() => import('../../Components/Roles/Admin/AdminDashboard.tsx'));
-const InProgressJobs = lazy(() => import('../../Components/Roles/Admin/InProgressJobs'));
-const PlannedJobs = lazy(() => import('../../Components/Roles/Admin/PlannedJobs'));
+
+import EditWorkingDetails from '../../Components/Roles/Admin/EditWorkingDetails';
 import PrintingMgrJobCard from '../../Components/Roles/PrintingMgr/job'; // Renamed import to avoid conflict
 import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
 import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';
 import ReadyDispatchForm from '../../Components/Roles/Dispatch_Executive /ReadytoDispatch/readyDispatch';
 import ProductionSteps from '../../Components/Roles/ProductionHead/productionSteps/production_steps';
-import PlannerDashboard from '../../Components/Roles/Planner/Planner_dashboard';
+import ProductionHeadDashboard from '../../Components/Roles/ProductionHead/production_dashboard';
+
 import StartNewJob from '../../Components/Roles/Planner/startNew_job';
 import PlannerNotifications from '../../Components/Roles/Planner/planner_notifications';
 import PlannerJobs from '../../Components/Roles/Planner/planner_jobs';
@@ -89,27 +89,27 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
           <AdminDashboard />
         )}
         {role === 'admin' && tabValue === 'planner' && (
-          <>
-            <OrderSummary />
-            <ProductionSchedule />
-          </>
+          <PlannerDashboardContainer />
         )}
         {role === 'admin' && tabValue === 'production' && (
-          <>
-            <Summary />
-            <ProductionUpdate />
-          </>
+          <ProductionHeadDashboard />
         )}
         {role === 'admin' && tabValue === 'dispatch' && (
-          <>
-            <DispatchOverview />
-            <DispatchSummary />
-          </>
+          <DispatchOverview />
+        )}
+        {role === 'admin' && tabValue === 'qc' && (
+          <QCDashboard />
+        )}
+        {role === 'admin' && tabValue === 'printing' && (
+          <PrintingDashboard />
+        )}
+        {role === 'admin' && tabValue === 'edit-working-details' && (
+          <EditWorkingDetails />
         )}
 
         {/* Planner role specific components */}
         {role === 'planner' && tabValue === 'dashboard' && (
-          <PlannerDashboard />
+          <PlannerDashboardContainer />
         )}
         {role === 'planner' && tabValue === 'start new job' && (
           <StartNewJob />
@@ -169,6 +169,11 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
           )
         )}
 
+        {/* Production Head Dashboard */}
+        {role === 'production_head' && tabValue === 'dashboard' && (
+          <ProductionHeadDashboard />
+        )}
+        
         {/* Production Head jobs tab - RESTORED ORIGINAL CONTENT */}
         {role === 'production_head' && tabValue === 'jobs' && (
           <div className="w-full flex flex-col items-center">

@@ -64,7 +64,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
       }
 
       // API endpoint
-      const API_ENDPOINT = "https://nrc-backend-his4.onrender.com/api/auth/login";
+      const API_ENDPOINT = "http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/login";
 
       // Make POST request to backend with the expected payload format
       const response = await axios.post(API_ENDPOINT, { id, password });

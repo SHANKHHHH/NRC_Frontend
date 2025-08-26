@@ -106,7 +106,7 @@ const CompletedJobsView: React.FC = () => {
         throw new Error('Authentication token not found');
       }
 
-      const response = await fetch('https://nrc-backend-his4.onrender.com/api/completed-jobs', {
+      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/completed-jobs', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
