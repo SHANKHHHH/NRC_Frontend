@@ -3,11 +3,11 @@ import React, { lazy, Suspense, useEffect, useState } from 'react';
 // Import the Job interface from the centralized types file
 
 
-const OrderSummary = lazy(() => import('../../Components/Roles/Admin/Planner/OrderSummary'));
-const ProductionSchedule = lazy(() => import('../../Components/Roles/Admin/Planner/ProductionSchedule'));
+const PlannerDashboardContainer = lazy(() => import('../../Components/Roles/Admin/Planner/PlannerDashboardContainer'));
 
 const DispatchOverview = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchOverview'));
-const DispatchSummary = lazy(() => import('../../Components/Roles/Admin/DispatchHead/DispatchSummary'));
+const QCDashboard = lazy(() => import('../../Components/Roles/Admin/QCManager/QCDashboard'));
+const PrintingDashboard = lazy(() => import('../../Components/Roles/Admin/PrintingManager/PrintingDashboard'));
 const AdminDashboard = lazy(() => import('../../Components/Roles/Admin/AdminDashboard.tsx'));
 
 import EditWorkingDetails from '../../Components/Roles/Admin/EditWorkingDetails';
@@ -17,7 +17,7 @@ import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /di
 import ReadyDispatchForm from '../../Components/Roles/Dispatch_Executive /ReadytoDispatch/readyDispatch';
 import ProductionSteps from '../../Components/Roles/ProductionHead/productionSteps/production_steps';
 import ProductionHeadDashboard from '../../Components/Roles/ProductionHead/production_dashboard';
-import PlannerDashboard from '../../Components/Roles/Planner/Planner_dashboard';
+
 import StartNewJob from '../../Components/Roles/Planner/startNew_job';
 import PlannerNotifications from '../../Components/Roles/Planner/planner_notifications';
 import PlannerJobs from '../../Components/Roles/Planner/planner_jobs';
@@ -89,19 +89,19 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
           <AdminDashboard />
         )}
         {role === 'admin' && tabValue === 'planner' && (
-          <>
-            <OrderSummary />
-            <ProductionSchedule />
-          </>
+          <PlannerDashboardContainer />
         )}
         {role === 'admin' && tabValue === 'production' && (
           <ProductionHeadDashboard />
         )}
         {role === 'admin' && tabValue === 'dispatch' && (
-          <>
-            <DispatchOverview />
-            <DispatchSummary />
-          </>
+          <DispatchOverview />
+        )}
+        {role === 'admin' && tabValue === 'qc' && (
+          <QCDashboard />
+        )}
+        {role === 'admin' && tabValue === 'printing' && (
+          <PrintingDashboard />
         )}
         {role === 'admin' && tabValue === 'edit-working-details' && (
           <EditWorkingDetails />
@@ -109,7 +109,7 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
 
         {/* Planner role specific components */}
         {role === 'planner' && tabValue === 'dashboard' && (
-          <PlannerDashboard />
+          <PlannerDashboardContainer />
         )}
         {role === 'planner' && tabValue === 'start new job' && (
           <StartNewJob />

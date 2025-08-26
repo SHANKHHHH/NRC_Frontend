@@ -105,32 +105,27 @@ class ProductionService {
   }
 
   async getCorrugationByJob(jobNrcNo: string): Promise<ProductionStep[]> {
-    console.log('🔄 Fetching corrugation data for job:', jobNrcNo);
     const timestamp = new Date().getTime();
     return this.fetchFromApi<ProductionStep[]>(`/corrugation/by-job/${encodeURIComponent(jobNrcNo)}?t=${timestamp}`);
   }
 
   async getFluteLaminationByJob(jobNrcNo: string): Promise<ProductionStep[]> {
-    console.log('🔄 Fetching flute lamination data for job:', jobNrcNo);
     const timestamp = new Date().getTime();
     return this.fetchFromApi<ProductionStep[]>(`/flute-laminate-board-conversion/by-job/${encodeURIComponent(jobNrcNo)}?t=${timestamp}`);
   }
 
   async getPunchingByJob(jobNrcNo: string): Promise<ProductionStep[]> {
-    console.log('🔄 Fetching punching data for job:', jobNrcNo);
     const timestamp = new Date().getTime();
     return this.fetchFromApi<ProductionStep[]>(`/punching/by-job/${encodeURIComponent(jobNrcNo)}?t=${timestamp}`);
   }
 
   async getFlapPastingByJob(jobNrcNo: string): Promise<ProductionStep[]> {
-    console.log('🔄 Fetching flap pasting data for job:', jobNrcNo);
     const timestamp = new Date().getTime();
     return this.fetchFromApi<ProductionStep[]>(`/side-flap-pasting/by-job/${encodeURIComponent(jobNrcNo)}?t=${timestamp}`);
   }
 
   async getAllProductionData(jobNrcNo: string): Promise<ProductionData> {
     try {
-      console.log('🔄 Fetching production data for job:', jobNrcNo);
       const [corrugation, fluteLamination, punching, flapPasting] = await Promise.all([
         this.getCorrugationByJob(jobNrcNo),
         this.getFluteLaminationByJob(jobNrcNo),
@@ -153,7 +148,6 @@ class ProductionService {
   // Get all available active jobs from completed-jobs API
   async getAvailableJobs(): Promise<Array<{ nrcJobNo: string; customerName: string; status: string }>> {
     try {
-      console.log('🔄 Fetching available jobs from:', `${API_BASE_URL}/completed-jobs`);
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) {
         throw new Error('Authentication token not found. Please log in.');
@@ -176,15 +170,10 @@ class ProductionService {
       }
 
       const result = await response.json();
-      console.log('📡 Raw API response:', result);
       
       if (result.success && Array.isArray(result.data)) {
-        console.log('📊 Total jobs in response:', result.data.length);
-        console.log('🔍 All job statuses (from jobDetails):', result.data.map((job: any) => job.jobDetails?.status));
-        
         // Filter only ACTIVE jobs - status is in jobDetails.status
         const activeJobs = result.data.filter((job: any) => job.jobDetails?.status === 'ACTIVE');
-        console.log('✅ Active jobs found:', activeJobs.length);
         
         const mappedJobs = activeJobs.map((job: any) => ({
           nrcJobNo: job.nrcJobNo,
@@ -192,11 +181,9 @@ class ProductionService {
           status: job.jobDetails?.status // Use jobDetails.status
         }));
         
-        console.log('🎯 Mapped jobs:', mappedJobs);
         return mappedJobs;
       }
       
-      console.log('❌ API response format issue:', result);
       return [];
     } catch (error) {
       console.error('Error fetching available jobs:', error);

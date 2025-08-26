@@ -40,17 +40,12 @@ const ProductionHeadDashboard: React.FC = () => {
 
   // Check authentication status
   useEffect(() => {
-    console.log('🔐 Component mounted, checking authentication...');
     const checkAuth = () => {
       const status = productionService.checkAuthStatus();
-      console.log('🔐 Auth status:', status);
       setAuthStatus(status);
       
       if (!status.isAuthenticated) {
-        console.log('❌ Auth failed:', status.message);
         setError(status.message);
-      } else {
-        console.log('✅ Auth successful, proceeding with job loading...');
       }
     };
     
@@ -60,41 +55,33 @@ const ProductionHeadDashboard: React.FC = () => {
   // Load available jobs
   useEffect(() => {
     const loadJobs = async () => {
-      console.log('🚀 loadJobs useEffect triggered, authStatus:', authStatus);
-      console.log('🔍 Current state - selectedJob:', selectedJob, 'availableJobs.length:', availableJobs.length);
       if (authStatus?.isAuthenticated) {
         try {
           setIsLoadingJobs(true);
-          console.log('🔄 Calling getAvailableJobs...');
           const jobs = await productionService.getAvailableJobs();
-          console.log('✅ Jobs loaded:', jobs);
           setAvailableJobs(jobs);
           setFilteredJobs(jobs);
           
           // Auto-select first job if available
           if (jobs.length > 0 && !selectedJob) {
-            console.log('🎯 Auto-selecting first job:', jobs[0].nrcJobNo);
             setSelectedJob(jobs[0].nrcJobNo);
           } else if (jobs.length === 0) {
-            console.log('⚠️ No jobs returned from API - this might be an issue');
             setError('No active jobs found. Please check if there are any jobs with STATUS=ACTIVE in the system.');
             // Stop loading since no jobs are available
             setIsLoading(false);
           }
         } catch (error) {
-          console.error('❌ Error loading jobs:', error);
+          console.error('Error loading jobs:', error);
           setError('Failed to load available jobs');
           setIsLoading(false);
         } finally {
           setIsLoadingJobs(false);
         }
-      } else {
-        console.log('⚠️ Auth not ready yet, authStatus:', authStatus);
       }
     };
     
     loadJobs();
-  }, [authStatus]); // Removed selectedJob dependency to prevent infinite loop
+  }, [authStatus, selectedJob]); // Added selectedJob back to prevent stale closure
 
   // Filter jobs based on search term
   useEffect(() => {
@@ -112,8 +99,6 @@ const ProductionHeadDashboard: React.FC = () => {
   // Fetch production data from API
   useEffect(() => {
     const fetchProductionData = async () => {
-      console.log('🚀 fetchProductionData useEffect triggered, selectedJob:', selectedJob, 'authStatus:', authStatus);
-      console.log('🔍 Current state - isLoading:', isLoading, 'isLoadingJobs:', isLoadingJobs);
       try {
         setIsLoading(true);
         setError(null);
@@ -121,17 +106,14 @@ const ProductionHeadDashboard: React.FC = () => {
         // Check auth before making API calls
         const authCheck = productionService.checkAuthStatus();
         if (!authCheck.isAuthenticated) {
-          console.log('❌ Auth check failed:', authCheck.message);
           setError(authCheck.message);
           return;
         }
         
-        console.log('🔄 Calling getAllProductionData for job:', selectedJob);
         const data = await productionService.getAllProductionData(selectedJob);
-        console.log('✅ Production data loaded:', data);
         setProductionData(data);
       } catch (error) {
-        console.error('❌ Error fetching production data:', error);
+        console.error('Error fetching production data:', error);
         setError('Failed to fetch production data. Please try again.');
         // Set empty data on error
         setProductionData({
@@ -146,10 +128,7 @@ const ProductionHeadDashboard: React.FC = () => {
     };
 
     if (selectedJob && authStatus?.isAuthenticated) {
-      console.log('🎯 Conditions met, calling fetchProductionData');
       fetchProductionData();
-    } else {
-      console.log('⚠️ Conditions not met - selectedJob:', selectedJob, 'authStatus:', authStatus);
     }
   }, [selectedJob, authStatus]);
 
@@ -203,8 +182,7 @@ const ProductionHeadDashboard: React.FC = () => {
     }, 0);
   };
 
-  // Debug loading states
-  console.log('🔍 Current loading states - isLoading:', isLoading, 'isLoadingJobs:', isLoadingJobs, 'selectedJob:', selectedJob, 'availableJobs.length:', availableJobs.length, 'authStatus:', authStatus);
+
   
   // Show loading if authentication is still pending
   if (!authStatus) {
@@ -226,9 +204,7 @@ const ProductionHeadDashboard: React.FC = () => {
           <p className="text-lg text-gray-600">
             {isLoadingJobs ? 'Loading available jobs...' : 'Loading production data...'}
           </p>
-          <p className="text-sm text-gray-500 mt-2">
-            Debug: isLoading={isLoading.toString()}, isLoadingJobs={isLoadingJobs.toString()}
-          </p>
+
         </div>
       </div>
     );
