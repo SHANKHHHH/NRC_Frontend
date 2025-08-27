@@ -154,7 +154,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
             />
 
             {/* Role Selection Dropdown (for UI only) */}
-            <select
+            {/* <select
               name="role"
               value={formData.role}
               onChange={handleChange}
@@ -165,8 +165,8 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
               <option value="dispatch_executive">Dispatch Executive</option>
               <option value="production_head">Production Head</option>
               <option value="planner">Planner</option>
-              {/* Add more roles as needed */}
-            </select>
+              Add more roles as needed
+            </select> */}
 
             {/* Submit Button */}
             <button
@@ -200,7 +200,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
             </button>
 
             {/* Temporary Login Button for Testing - IMPORTANT: Uses your provided valid token */}
-            <button
+            {/* <button
               type="button"
               onClick={() => {
                 // Simulate successful login with test data using correct payload structure
@@ -229,7 +229,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
                 .map(word => word.charAt(0).toUpperCase() + word.slice(1))
                 .join(' ')
               }
-            </button>
+            </button> */}
 
             {/* Status Messages */}
             {submitStatus === "success" && (
