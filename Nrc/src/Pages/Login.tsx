@@ -2,6 +2,7 @@ import { useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Logo from "../assets/Login/logo.jpg"; // Assuming this is the correct path to your logo
+import LoadingSpinner from "../Components/common/LoadingSpinner";
 
 /**
  * Type for form data used in login
@@ -174,28 +175,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
               disabled={isSubmitting}
               className="w-full bg-[#00AEEF] hover:bg-[#0095cc] text-white font-medium py-3 px-4 rounded-lg transition duration-300 flex justify-center items-center hover:cursor-pointer"
             >
-              {isSubmitting && (
-                <svg
-                  className="animate-spin h-5 w-5 mr-2 text-white"
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  ></circle>
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8H4z"
-                  ></path>
-                </svg>
-              )}
+              {isSubmitting && <LoadingSpinner size="sm" variant="button" color="white" text="" />}
               {isSubmitting ? "Logging in..." : "Login"}
             </button>
 

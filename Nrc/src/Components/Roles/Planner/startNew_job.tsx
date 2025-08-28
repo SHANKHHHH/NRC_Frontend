@@ -3,6 +3,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { type Job } from './Types/job.ts'; // Adjust path as needed
 import JobCard from './jobCard/JobCard'; // Adjust path as needed
 import JobDetailModal from './modal/jobDetailModal'; // Adjust path as needed
+import LoadingSpinner from '../../common/LoadingSpinner';
 
 const StartNewJob: React.FC = () => {
   const [jobs, setJobs] = useState<Job[]>([]);
@@ -234,12 +235,11 @@ const StartNewJob: React.FC = () => {
         </div>
       </div>
 
-      {loading && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-          <p className="ml-4 text-lg text-gray-600">Loading jobs...</p>
-        </div>
-      )}
+      import LoadingSpinner from '../../common/LoadingSpinner';
+
+// ... existing code ...
+
+      {loading && <LoadingSpinner size="lg" text="Loading jobs..." />}
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">

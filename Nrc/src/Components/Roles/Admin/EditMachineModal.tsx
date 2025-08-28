@@ -267,10 +267,10 @@ const EditMachineModal: React.FC<EditMachineModalProps> = ({
           </div>
 
           {/* Footer */}
-          <div className="bg-gray-50 px-6 py-3 flex justify-end space-x-3">
+          <div className="-50 px-6 py-3 flex justify-end space-x-3">
             <button
               onClick={onClose}
-              className="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
+              className="-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors"
             >
               Cancel
             </button>

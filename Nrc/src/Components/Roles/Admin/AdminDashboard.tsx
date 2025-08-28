@@ -9,6 +9,7 @@ import AdvancedDataChart from './ChartComponents/AdvancedDataChart';
 import JobPlansTable from './DataTable/JobPlansTable';
 import { useNavigate } from 'react-router-dom';
 import CompletedJobsTable from './CompletedJobsTable';
+import LoadingSpinner from '../../common/LoadingSpinner';
 
 // Types based on the API response structure
 interface JobPlanStep {
@@ -511,7 +512,7 @@ const AdminDashboard: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-screen ">
-        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
+        <LoadingSpinner size="lg" variant="inline" />
         <p className="ml-4 text-lg text-gray-600">Loading admin dashboard...</p>
       </div>
     );

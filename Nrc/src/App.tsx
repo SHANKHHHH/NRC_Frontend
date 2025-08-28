@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from 'react';
+import { Suspense, lazy, useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom';
 import './App.css';
 import Header from './Components/Navbar/Header/Header';
@@ -22,7 +22,55 @@ function AppContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  const handleLogout = () => setIsAuthenticated(false);
+  // Check for existing authentication on component mount
+  useEffect(() => {
+    const checkExistingAuth = () => {
+      const accessToken = localStorage.getItem('accessToken');
+      const userData = localStorage.getItem('userData');
+      
+      if (accessToken && userData) {
+        try {
+          // Verify token is valid by checking if it's not expired
+          const tokenData = JSON.parse(atob(accessToken.split('.')[1]));
+          const currentTime = Date.now() / 1000;
+          
+          if (tokenData.exp > currentTime) {
+            // Token is valid, restore authentication state
+            const parsedUserData = JSON.parse(userData);
+            setIsAuthenticated(true);
+            
+            // Restore user role from stored data
+            if (parsedUserData.roles && parsedUserData.roles.length > 0) {
+              setUserRole(parsedUserData.roles[0]);
+            }
+            
+            console.log('Authentication restored from localStorage');
+          } else {
+            // Token expired, clear localStorage
+            console.log('Token expired, clearing authentication data');
+            localStorage.removeItem('accessToken');
+            localStorage.removeItem('userData');
+          }
+        } catch (error) {
+          console.error('Error parsing token or user data:', error);
+          // Clear invalid data
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('userData');
+        }
+      }
+    };
+
+    // Add a small delay to ensure localStorage is accessible
+    const timer = setTimeout(checkExistingAuth, 100);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleLogout = () => {
+    setIsAuthenticated(false);
+    setUserRole(null);
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('userData');
+  };
 
   // This function is just to satisfy the prop requirement for JobInitiationForm when rendered directly by route.
   const handleJobUpdatedInApp = () => {

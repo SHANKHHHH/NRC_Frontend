@@ -10,6 +10,7 @@ import {
   ClipboardDocumentCheckIcon
 } from '@heroicons/react/24/outline';
 import { qcService, type QCData, type QCSummary } from './qcService';
+import LoadingSpinner from '../../../common/LoadingSpinner';
 
 const QCDashboard: React.FC = () => {
   const [qcData, setQcData] = useState<QCData[]>([]);
@@ -115,11 +116,8 @@ const QCDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen  flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Loading QC Dashboard...</p>
-        </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="xl" text="Loading QC Dashboard..." />
       </div>
     );
   }
@@ -156,7 +154,7 @@ const QCDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen  p-6">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -174,10 +172,16 @@ const QCDashboard: React.FC = () => {
             disabled={loading}
             className="bg-blue-500 hover:bg-blue-600 disabled:bg-gray-400 text-white px-4 py-2 rounded-lg transition-colors flex items-center space-x-2"
           >
-            <svg className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-            </svg>
-            <span>{loading ? 'Refreshing...' : 'Refresh'}</span>
+            {loading ? (
+              <LoadingSpinner size="sm" variant="button" color="white" text="Refreshing..." />
+            ) : (
+              <>
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                <span>Refresh</span>
+              </>
+            )}
           </button>
         </div>
         <p className="text-sm text-gray-500">

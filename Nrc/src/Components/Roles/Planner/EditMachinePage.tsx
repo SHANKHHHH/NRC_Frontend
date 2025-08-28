@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, Edit3 } from 'lucide-react';
 import EditMachineModal from './modal/EditMachineModal';
 import { type Job, type JobPlan, type JobPlanStep } from './Types/job';
+import LoadingSpinner from '../../common/LoadingSpinner';
 
 interface EditMachinePageProps {}
 
@@ -69,8 +70,7 @@ const EditMachinePage: React.FC<EditMachinePageProps> = () => {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">Checking authentication...</p>
+                  <LoadingSpinner size="md" text="Checking authentication..." />
         </div>
       </div>
     );
