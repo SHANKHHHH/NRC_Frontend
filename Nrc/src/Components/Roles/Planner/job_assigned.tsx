@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'; // Import useNavigate
 import { type JobPlan } from './Types/job.ts'; // Adjust path as needed
 import JobPlanningCard from './jobPlanningCard/JobPlanningCard.tsx'; // Import the new card component
 import JobPlanningDetailModal from './modal/JobPlanningDetailModal.tsx'; // Import the new detail modal
+import LoadingSpinner from '../../common/LoadingSpinner';
 
 const JobAssigned: React.FC = () => {
   const [jobPlans, setJobPlans] = useState<JobPlan[]>([]);
@@ -73,12 +74,7 @@ const JobAssigned: React.FC = () => {
     <div className="p-4 sm:p-6 lg:p-8  min-h-screen">
       <h1 className="text-3xl font-bold text-gray-800 mb-8 text-center">Assigned Job Plans</h1>
 
-      {loading && (
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-500"></div>
-          <p className="ml-4 text-lg text-gray-600">Loading job plans...</p>
-        </div>
-      )}
+      {loading && <LoadingSpinner size="lg" text="Loading job plans..." />}
 
       {error && (
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6" role="alert">

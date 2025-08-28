@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { productionService } from './productionService';
 import type { ProductionData, ProductionStep, AggregatedProductionData, JobPlan } from './productionService';
+import LoadingSpinner from '../../common/LoadingSpinner';
 
 const ProductionHeadDashboard: React.FC = () => {
   const [aggregatedData, setAggregatedData] = useState<AggregatedProductionData | null>(null);
@@ -187,10 +188,7 @@ const ProductionHeadDashboard: React.FC = () => {
   if (!authStatus) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Checking authentication...</p>
-        </div>
+        <LoadingSpinner size="xl" text="Checking authentication..." />
       </div>
     );
   }
@@ -198,10 +196,7 @@ const ProductionHeadDashboard: React.FC = () => {
   if (isLoadingAggregated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-lg text-gray-600">Loading production overview...</p>
-        </div>
+        <LoadingSpinner size="xl" text="Loading production overview..." />
       </div>
     );
   }
@@ -255,10 +250,16 @@ const ProductionHeadDashboard: React.FC = () => {
                 className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg transition-colors flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isLoadingAggregated}
               >
-                <svg className={`h-4 w-4 ${isLoadingAggregated ? 'animate-spin' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                <span>{isLoadingAggregated ? 'Refreshing...' : 'Refresh'}</span>
+                {isLoadingAggregated ? (
+                  <LoadingSpinner size="sm" variant="button" color="white" text="Refreshing..." />
+                ) : (
+                  <>
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    <span>Refresh</span>
+                  </>
+                )}
               </button>
               <div className="bg-white/20 px-4 py-2 rounded-lg">
                 <span className="text-sm">Last Updated: {new Date().toLocaleTimeString()}</span>
@@ -606,8 +607,7 @@ const ProductionHeadDashboard: React.FC = () => {
                 
                 {isLoading ? (
                   <div className="text-center py-8">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading production data...</p>
+                    <LoadingSpinner size="md" text="Loading production data..." />
                   </div>
                 ) : (
                   <div className="space-y-6">
