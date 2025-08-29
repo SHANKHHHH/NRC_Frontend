@@ -104,7 +104,7 @@ const EditMachineModal: React.FC<EditMachineModalProps> = ({
       const accessToken = localStorage.getItem('accessToken');
       console.log('EditMachineModal: Access token:', accessToken ? 'Present' : 'Missing');
       
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/machines', {
+      const response = await fetch('https://nrprod.nrcontainers.com/api/machines', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
@@ -164,7 +164,7 @@ const EditMachineModal: React.FC<EditMachineModalProps> = ({
       // Make the API call
       const accessToken = localStorage.getItem('accessToken');
       const response = await fetch(
-        `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/${encodeURIComponent(job.nrcJobNo)}/steps/${step.stepNo}`,
+        `https://nrprod.nrcontainers.com/api/job-planning/${encodeURIComponent(job.nrcJobNo)}/steps/${step.stepNo}`,
         {
           method: 'PUT',
           headers: {

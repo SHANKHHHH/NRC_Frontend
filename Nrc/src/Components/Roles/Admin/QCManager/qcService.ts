@@ -26,7 +26,7 @@ export interface QCSummary {
 }
 
 class QCService {
-  private baseUrl = 'https://nrc-backend-his4.onrender.com/api';
+  private baseUrl = `${import.meta.env.VITE_API_URL}/api`;
 
   // Get all QC data
   async getAllQCData(): Promise<QCData[]> {

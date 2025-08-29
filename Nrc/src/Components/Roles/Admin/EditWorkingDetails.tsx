@@ -88,7 +88,7 @@ const EditWorkingDetails: React.FC = () => {
       const accessToken = localStorage.getItem('accessToken');
       console.log('Access token:', accessToken ? 'Present' : 'Missing');
       
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
+      const response = await fetch('https://nrprod.nrcontainers.com/api/job-planning/', {
         headers: {
           'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
@@ -142,7 +142,7 @@ const EditWorkingDetails: React.FC = () => {
       for (const stepType of stepTypes) {
         try {
           const accessToken = localStorage.getItem('accessToken');
-          const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/${stepType}/by-job/${encodeURIComponent(nrcJobNo)}`, {
+          const response = await fetch(`https://nrprod.nrcontainers.com/api/${stepType}/by-job/${encodeURIComponent(nrcJobNo)}`, {
             headers: {
               'Authorization': `Bearer ${accessToken}`,
               'Content-Type': 'application/json'
@@ -197,7 +197,7 @@ const EditWorkingDetails: React.FC = () => {
       }
 
       const accessToken = localStorage.getItem('accessToken');
-      const apiUrl = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/${stepType}/by-job/${encodeURIComponent(selectedJob!.nrcJobNo)}`;
+      const apiUrl = `https://nrprod.nrcontainers.com/api/${stepType}/by-job/${encodeURIComponent(selectedJob!.nrcJobNo)}`;
       console.log('🔍 Fetching from URL:', apiUrl);
       console.log('🔍 Job NRC:', selectedJob!.nrcJobNo);
       console.log('🔍 Encoded Job NRC:', encodeURIComponent(selectedJob!.nrcJobNo));
@@ -255,7 +255,7 @@ const EditWorkingDetails: React.FC = () => {
       const accessToken = localStorage.getItem('accessToken');
       
       // Try the ALB URL first, then fallback to onrender.com
-      let putUrl = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/${stepType}/${encodeURIComponent(updatedData.jobNrcJobNo)}`;
+      let putUrl = `https://nrprod.nrcontainers.com/api/${stepType}/${encodeURIComponent(updatedData.jobNrcJobNo)}`;
       let response = await fetch(putUrl, {
         method: 'PUT',
         headers: {
@@ -268,7 +268,7 @@ const EditWorkingDetails: React.FC = () => {
       // If ALB fails, try onrender.com
       if (!response.ok) {
         console.log('🔍 ALB PUT failed, trying onrender.com...');
-        putUrl = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/${stepType}/${encodeURIComponent(updatedData.jobNrcJobNo)}`;
+        putUrl = `https://nrprod.nrcontainers.com/api/${stepType}/${encodeURIComponent(updatedData.jobNrcJobNo)}`;
         console.log('🔍 PUT request to onrender.com URL:', putUrl);
         
         response = await fetch(putUrl, {

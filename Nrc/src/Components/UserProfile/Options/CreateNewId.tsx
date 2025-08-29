@@ -66,7 +66,7 @@ const CreateNewId: React.FC<CreateNewIdProps> = ({ onClose, onSuccess }) => {
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/auth/add-member', {
+      const response = await fetch('https://nrprod.nrcontainers.com/api/auth/add-member', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
