@@ -58,15 +58,21 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
     // This part would ideally fetch existing step-specific details if editing
     // For now, initializing based on common fields.
     if (step.stepName === 'PrintingDetails' && step.printingDetails) {
-      setQtySheet(step.printingDetails.quantity || '');
+      setQtySheet(step.printingDetails.postPrintingFinishingOkQty || '');
       setStepSpecificFormData({
         oprName: step.printingDetails.oprName || '',
         wastage: step.printingDetails.wastage || '',
         machine: step.printingDetails.machine || '',
         date: toDateInput(step.printingDetails.date),
+        shift: step.printingDetails.shift || '',
+        noOfColours: step.printingDetails.noOfColours || '',
+        inksUsed: step.printingDetails.inksUsed || '',
+        coatingType: step.printingDetails.coatingType || '',
+        separateSheets: step.printingDetails.separateSheets || false,
+        extraSheets: step.printingDetails.extraSheets || 0,
       });
     } else if (step.stepName === 'Corrugation' && step.corrugationDetails) {
-      setQtySheet(step.corrugationDetails.quantity || '');
+      setQtySheet(step.corrugationDetails.noOfSheets || '');
       setStepSpecificFormData({
         date: toDateInput(step.corrugationDetails.date),
         shift: step.corrugationDetails.shift || '',
@@ -81,7 +87,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
       });
     } // Add other step types here
     else if (step.stepName === 'FluteLamination' && step.fluteLaminationDetails) {
-      setQtySheet(step.fluteLaminationDetails.quantity || '');
+      setQtySheet(step.fluteLaminationDetails.okQty || '');
       setStepSpecificFormData({
         date: toDateInput(step.fluteLaminationDetails.date),
         shift: step.fluteLaminationDetails.shift || '',
@@ -93,14 +99,16 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
       });
     }
     else if (step.stepName === 'Punching' && step.punchingDetails) {
-      setQtySheet(step.punchingDetails.quantity || '');
+      setQtySheet(step.punchingDetails.okQty || '');
       setStepSpecificFormData({
         date: toDateInput(step.punchingDetails.date),
+        shift: step.punchingDetails.shift || '',
         operatorName: step.punchingDetails.operatorName || '',
         machine: step.punchingDetails.machine || '',
         die: step.punchingDetails.die || '',
         wastage: step.punchingDetails.wastage || '',
         remarks: step.punchingDetails.remarks || '',
+        qcCheckSignBy: step.punchingDetails.qcCheckSignBy || '',
       });
     }
     else if (step.stepName === 'FlapPasting' && step.flapPastingDetails) {
@@ -113,27 +121,33 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
         adhesive: step.flapPastingDetails.adhesive || '',
         wastage: step.flapPastingDetails.wastage || '',
         remarks: step.flapPastingDetails.remarks || '',
+        qcCheckSignBy: step.flapPastingDetails.qcCheckSignBy || '',
       });
     }
     else if (step.stepName === 'QualityDept' && step.qcDetails) {
-      setQtySheet(step.qcDetails.quantity || '');
+      setQtySheet(step.qcDetails.passQty || '');
       setStepSpecificFormData({
         date: toDateInput(step.qcDetails.date),
+        shift: step.qcDetails.shift || '',
+        operatorName: step.qcDetails.operatorName || '',
         checkedBy: step.qcDetails.checkedBy || '',
         rejectedQty: step.qcDetails.rejectedQty || '',
         reasonForRejection: step.qcDetails.reasonForRejection || '',
         remarks: step.qcDetails.remarks || '',
+        qcCheckSignBy: step.qcDetails.qcCheckSignBy || '',
       });
     }
     else if (step.stepName === 'DispatchProcess' && step.dispatchDetails) {
-      setQtySheet(step.dispatchDetails.quantity || '');
+      setQtySheet(step.dispatchDetails.noOfBoxes || '');
       setStepSpecificFormData({
         date: toDateInput(step.dispatchDetails.date),
+        shift: step.dispatchDetails.shift || '',
         operatorName: step.dispatchDetails.operatorName || '',
         dispatchNo: step.dispatchDetails.dispatchNo || '',
         dispatchDate: toDateInput(step.dispatchDetails.dispatchDate),
         balanceQty: step.dispatchDetails.balanceQty || '',
         remarks: step.dispatchDetails.remarks || '',
+        qcCheckSignBy: step.dispatchDetails.qcCheckSignBy || '',
       });
     }
 
@@ -223,9 +237,18 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
         put2Payload = {
           ...commonPut2Fields,
           date: toISOStringForPayload(stepSpecificFormData.date) as string,
+          shift: stepSpecificFormData.shift || '',
           oprName: stepSpecificFormData.oprName,
+          noOfColours: stepSpecificFormData.noOfColours || '',
+          inksUsed: stepSpecificFormData.inksUsed || '',
           wastage: Number(stepSpecificFormData.wastage),
           machine: stepSpecificFormData.machine,
+          postPrintingFinishingOkQty: Number(qtySheet) - Number(stepSpecificFormData.wastage || 0),
+          coatingType: stepSpecificFormData.coatingType || '',
+          separateSheets: stepSpecificFormData.separateSheets || false,
+          extraSheets: stepSpecificFormData.extraSheets || 0,
+          remarks: stepSpecificFormData.remarks || '',
+          qcCheckSignBy: stepSpecificFormData.qcCheckSignBy || '',
         } as PrintingDetailsPayload;
         put2Endpoint = `https://nrprod.nrcontainers.com/api/printing-details/${nrcJobNo}`;
         break;
@@ -240,6 +263,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           gsm1: stepSpecificFormData.gsm1,
           gsm2: stepSpecificFormData.gsm2,
           flute: stepSpecificFormData.flute,
+          noOfSheets: Number(qtySheet),
           remarks: stepSpecificFormData.remarks,
           qcCheckSignBy: stepSpecificFormData.qcCheckSignBy,
         } as CorrugationPayload;
@@ -255,6 +279,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           qcCheckSignBy: stepSpecificFormData.qcCheckSignBy,
           adhesive: stepSpecificFormData.adhesive,
           wastage: Number(stepSpecificFormData.wastage),
+          okQty: Number(qtySheet) - Number(stepSpecificFormData.wastage || 0),
         } as FluteLaminationPayload;
         put2Endpoint = `https://nrprod.nrcontainers.com/api/flute-laminate-board-conversion/${nrcJobNo}`;
         break;
@@ -262,11 +287,14 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
         put2Payload = {
           ...commonPut2Fields,
           date: toISOStringForPayload(stepSpecificFormData.date) as string,
+          shift: stepSpecificFormData.shift || '',
           operatorName: stepSpecificFormData.operatorName,
           machine: stepSpecificFormData.machine,
           die: stepSpecificFormData.die,
           wastage: Number(stepSpecificFormData.wastage),
+          okQty: Number(qtySheet) - Number(stepSpecificFormData.wastage || 0),
           remarks: stepSpecificFormData.remarks,
+          qcCheckSignBy: stepSpecificFormData.qcCheckSignBy || '',
         } as PunchingPayload;
         put2Endpoint = `https://nrprod.nrcontainers.com/api/punching/${nrcJobNo}`;
         break;
@@ -281,6 +309,7 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
           wastage: Number(stepSpecificFormData.wastage),
           remarks: stepSpecificFormData.remarks,
           user: empId, // Emp Id is passed here
+          qcCheckSignBy: stepSpecificFormData.qcCheckSignBy || '',
         } as FlapPastingPayload;
         put2Endpoint = `https://nrprod.nrcontainers.com/api/side-flap-pasting/${nrcJobNo}`;
         break;
@@ -288,10 +317,14 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
         put2Payload = {
           ...commonPut2Fields,
           date: toISOStringForPayload(stepSpecificFormData.date) as string,
+          shift: stepSpecificFormData.shift || '',
+          operatorName: stepSpecificFormData.operatorName || '',
           checkedBy: stepSpecificFormData.checkedBy,
+          passQty: Number(qtySheet) - Number(stepSpecificFormData.rejectedQty || 0),
           rejectedQty: Number(stepSpecificFormData.rejectedQty),
           reasonForRejection: stepSpecificFormData.reasonForRejection,
           remarks: stepSpecificFormData.remarks,
+          qcCheckSignBy: stepSpecificFormData.qcCheckSignBy || '',
         } as QCDetailsPayload;
         put2Endpoint = `https://nrprod.nrcontainers.com/api/quality-dept/${nrcJobNo}`;
         break;
@@ -299,11 +332,14 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
         put2Payload = {
           ...commonPut2Fields,
           date: toISOStringForPayload(stepSpecificFormData.date) as string,
+          shift: stepSpecificFormData.shift || '',
           operatorName: stepSpecificFormData.operatorName,
           dispatchNo: stepSpecificFormData.dispatchNo,
           dispatchDate: toISOStringForPayload(stepSpecificFormData.dispatchDate) as string,
+          noOfBoxes: Number(qtySheet),
           balanceQty: Number(stepSpecificFormData.balanceQty),
           remarks: stepSpecificFormData.remarks,
+          qcCheckSignBy: stepSpecificFormData.qcCheckSignBy || '',
         } as DispatchDetailsPayload;
         put2Endpoint = `https://nrprod.nrcontainers.com/api/dispatch-process/${nrcJobNo}`;
         break;
@@ -514,6 +550,14 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
               <input type="date" id="date" name="date" value={stepSpecificFormData.date} {...commonProps} />
             </div>
             <div>
+              <label htmlFor="shift" className="block text-sm font-medium text-gray-700 mb-1">Shift</label>
+              <input type="text" id="shift" name="shift" value={stepSpecificFormData.shift} {...commonProps} />
+            </div>
+            <div>
+              <label htmlFor="operatorName" className="block text-sm font-medium text-gray-700 mb-1">Operator Name</label>
+              <input type="text" id="operatorName" name="operatorName" value={stepSpecificFormData.operatorName} {...commonProps} />
+            </div>
+            <div>
               <label htmlFor="checkedBy" className="block text-sm font-medium text-gray-700 mb-1">Checked By</label>
               <input type="text" id="checkedBy" name="checkedBy" value={stepSpecificFormData.checkedBy} {...commonProps} />
             </div>
@@ -528,6 +572,10 @@ const GenericStepForm: React.FC<GenericStepFormProps> = ({
             <div>
               <label htmlFor="remarks" className="block text-sm font-medium text-gray-700 mb-1">Remarks</label>
               <input type="text" id="remarks" name="remarks" value={stepSpecificFormData.remarks} {...commonProps} />
+            </div>
+            <div>
+              <label htmlFor="qcCheckSignBy" className="block text-sm font-medium text-gray-700 mb-1">QC Check Sign By</label>
+              <input type="text" id="qcCheckSignBy" name="qcCheckSignBy" value={stepSpecificFormData.qcCheckSignBy} {...commonProps} />
             </div>
           </>
         );
