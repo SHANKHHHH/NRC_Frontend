@@ -26,7 +26,7 @@ const JobAssigned: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
+      const response = await fetch('https://nrprod.nrcontainers.com/api/job-planning/', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

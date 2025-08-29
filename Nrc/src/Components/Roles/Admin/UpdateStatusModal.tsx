@@ -74,12 +74,19 @@ const UpdateStatusModal: React.FC<UpdateStatusModalProps> = ({
         steps: updatedSteps
       };
 
+      // Get access token from localStorage
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) {
+        throw new Error('Authentication token not found. Please log in again.');
+      }
+
       // Make the API call
       const response = await fetch(
-        `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/${encodeURIComponent(job.nrcJobNo)}/steps/${step.stepNo}`,
+        `https://nrprod.nrcontainers.com/api/job-planning/${encodeURIComponent(job.nrcJobNo)}/steps/${step.stepNo}`,
         {
           method: 'PUT',
           headers: {
+            'Authorization': `Bearer ${accessToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(updatePayload)

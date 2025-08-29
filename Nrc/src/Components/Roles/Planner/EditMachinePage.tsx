@@ -97,7 +97,7 @@ const EditMachinePage: React.FC<EditMachinePageProps> = () => {
       }
 
       // Search for jobs by NRC Job Number
-      const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs?nrcJobNo=${encodeURIComponent(searchTerm.trim())}`, {
+      const response = await fetch(`https://nrprod.nrcontainers.com/api/jobs?nrcJobNo=${encodeURIComponent(searchTerm.trim())}`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
@@ -145,7 +145,7 @@ const EditMachinePage: React.FC<EditMachinePageProps> = () => {
       }
 
       // Fetch job plan for the selected job
-      const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/${encodeURIComponent(job.nrcJobNo)}`, {
+      const response = await fetch(`https://nrprod.nrcontainers.com/api/job-planning/${encodeURIComponent(job.nrcJobNo)}`, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
@@ -189,7 +189,7 @@ const EditMachinePage: React.FC<EditMachinePageProps> = () => {
       if (!accessToken) throw new Error('Authentication token not found.');
 
       // Update job plan with new machine assignments
-      const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/${encodeURIComponent(selectedJob!.nrcJobNo)}`, {
+      const response = await fetch(`https://nrprod.nrcontainers.com/api/job-planning/${encodeURIComponent(selectedJob!.nrcJobNo)}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${accessToken}`,

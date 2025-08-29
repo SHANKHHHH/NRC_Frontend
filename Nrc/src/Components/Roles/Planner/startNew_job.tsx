@@ -27,7 +27,7 @@ const StartNewJob: React.FC = () => {
         return;
       }
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs', {
+      const response = await fetch('https://nrprod.nrcontainers.com/api/jobs', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -86,7 +86,7 @@ const StartNewJob: React.FC = () => {
         throw new Error('Authentication token not found. Please log in.');
       }
 
-      const API_ENDPOINT = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${nrcJobNo}`;
+      const API_ENDPOINT = `https://nrprod.nrcontainers.com/api/jobs/${nrcJobNo}`;
       const response = await fetch(API_ENDPOINT, {
         method: 'PUT',
         headers: {

@@ -113,7 +113,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         throw new Error('Authentication token not found. Please log in.');
       }
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs', {
+      const response = await fetch('https://nrprod.nrcontainers.com/api/jobs', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -181,7 +181,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         const accessToken = localStorage.getItem('accessToken');
         if (!accessToken) throw new Error('Authentication token not found.');
 
-        const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${nrcJobNo}`, {
+        const response = await fetch(`https://nrprod.nrcontainers.com/api/jobs/${nrcJobNo}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -243,7 +243,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${job.nrcJobNo}`, {
+      const response = await fetch(`https://nrprod.nrcontainers.com/api/jobs/${job.nrcJobNo}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -290,7 +290,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
 
       const payloadWithJobNo = { ...poDetails, nrcJobNo: job.nrcJobNo };
 
-      const response = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/purchase-orders/create', {
+      const response = await fetch('https://nrprod.nrcontainers.com/api/purchase-orders/create', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -335,7 +335,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      const response = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${job.nrcJobNo}`, {
+      const response = await fetch(`https://nrprod.nrcontainers.com/api/jobs/${job.nrcJobNo}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -436,7 +436,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       console.log('Creating job plan with selected steps:', jobPlanData);
 
       // Try to create job plan using the job-planning endpoint
-      const jobPlanResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
+      const jobPlanResponse = await fetch('https://nrprod.nrcontainers.com/api/job-planning/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -454,7 +454,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         console.log('Job plan creation failed, trying alternative approach...');
         
         // Update job status to trigger job plan creation
-        const statusUpdateResponse = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${completedJob.nrcJobNo}`, {
+        const statusUpdateResponse = await fetch(`https://nrprod.nrcontainers.com/api/jobs/${completedJob.nrcJobNo}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -622,7 +622,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
       };
 
       // Try to create job plan using the job-planning endpoint
-      const jobPlanResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
+      const jobPlanResponse = await fetch('https://nrprod.nrcontainers.com/api/job-planning/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -640,7 +640,7 @@ const JobInitiationForm: React.FC<JobInitiationFormProps> = ({ onJobUpdated }) =
         console.log('Job plan creation failed, trying alternative approach...');
         
         // Update job status to trigger job plan creation
-        const statusUpdateResponse = await fetch(`http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/jobs/${completedJob.nrcJobNo}`, {
+        const statusUpdateResponse = await fetch(`https://nrprod.nrcontainers.com/api/jobs/${completedJob.nrcJobNo}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',

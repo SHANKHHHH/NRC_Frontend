@@ -25,7 +25,7 @@ export interface DispatchData {
 }
 
 class DispatchService {
-  private baseUrl = 'https://nrc-backend-his4.onrender.com/api';
+  private baseUrl = `${import.meta.env.VITE_API_URL}/api`
 
   // Get all dispatch processes
   async getAllDispatchProcesses(): Promise<DispatchProcess[]> {

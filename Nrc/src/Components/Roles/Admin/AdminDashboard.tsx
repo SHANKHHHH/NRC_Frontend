@@ -185,28 +185,28 @@ const AdminDashboard: React.FC = () => {
       let endpoint = '';
       switch (stepName) {
         case 'PaperStore':
-          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/paper-store/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `https://nrprod.nrcontainers.com/api/paper-store/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'PrintingDetails':
-          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/printing-details/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `https://nrprod.nrcontainers.com/api/printing-details/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'Corrugation':
-          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/corrugation/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `https://nrprod.nrcontainers.com/api/corrugation/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'FluteLaminateBoardConversion':
-          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/flute-laminate-board-conversion/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `https://nrprod.nrcontainers.com/api/flute-laminate-board-conversion/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'Punching':
-          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/punching/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `https://nrprod.nrcontainers.com/api/punching/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'SideFlapPasting':
-          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/side-flap-pasting/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `https://nrprod.nrcontainers.com/api/side-flap-pasting/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'QualityDept':
-          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/quality-dept/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `https://nrprod.nrcontainers.com/api/quality-dept/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         case 'DispatchProcess':
-          endpoint = `http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/dispatch-process/by-job/${encodeURIComponent(jobNrcJobNo)}`;
+          endpoint = `https://nrprod.nrcontainers.com/api/dispatch-process/by-job/${encodeURIComponent(jobNrcJobNo)}`;
           break;
         default:
           return null;
@@ -241,7 +241,7 @@ const AdminDashboard: React.FC = () => {
       if (!accessToken) throw new Error('Authentication token not found.');
 
       // Fetch job planning data
-      const jobPlanningResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/job-planning/', {
+      const jobPlanningResponse = await fetch('https://nrprod.nrcontainers.com/api/job-planning/', {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
@@ -252,7 +252,7 @@ const AdminDashboard: React.FC = () => {
       const jobPlanningResult = await jobPlanningResponse.json();
       
       // Fetch completed jobs data
-      const completedJobsResponse = await fetch('http://nrc-backend-alb-174636098.ap-south-1.elb.amazonaws.com/api/completed-jobs', {
+      const completedJobsResponse = await fetch('https://nrprod.nrcontainers.com/api/completed-jobs', {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
