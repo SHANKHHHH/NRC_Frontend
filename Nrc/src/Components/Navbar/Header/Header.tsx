@@ -99,6 +99,7 @@ const allTabSets: { [key: string]: { label: string; value: string }[] } = {
   planner: [
     { label: 'Dashboard', value: 'dashboard' },
     { label: 'Start New Job', value: 'start new job' },
+    { label: 'Create New Job', value: 'create new job' },
     // { label: 'Notifications', value: 'notifications' },
     { label: 'Jobs', value: 'jobs' },
     { label: 'Job Assigned', value: 'job assigned' }, // ADDED: New tab for Planner
@@ -246,9 +247,16 @@ const Header: React.FC<HeaderProps> = ({ tabValue, setTabValue, onLogout, role }
           } else if (normalizedRole === 'planner') {
             if (option === "Edit Machine") {
               navigate('/dashboard/edit-machine');
-            } else {
-              const found = sidebarConfig[normalizedRole].options.find(o => o.label === option);
-              if (found) setTabValue(found.tab);
+            } else if (option === "Create New Job") {
+              setTabValue("create new job");
+            } else if (option === "Start New Job") {
+              setTabValue("start new job");
+            } else if (option === "Jobs") {
+              setTabValue("jobs");
+            } else if (option === "Job Assigned") {
+              setTabValue("job assigned");
+            } else if (option === "Dashboard") {
+              setTabValue("dashboard");
             }
             setSidebarOpen(false);
             setMenuOpen(false);

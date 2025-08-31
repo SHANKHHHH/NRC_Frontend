@@ -235,9 +235,7 @@ const StartNewJob: React.FC = () => {
         </div>
       </div>
 
-      import LoadingSpinner from '../../common/LoadingSpinner';
 
-// ... existing code ...
 
       {loading && <LoadingSpinner size="lg" text="Loading jobs..." />}
 
