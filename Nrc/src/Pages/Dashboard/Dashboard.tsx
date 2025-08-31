@@ -19,6 +19,7 @@ import ProductionSteps from '../../Components/Roles/ProductionHead/productionSte
 import ProductionHeadDashboard from '../../Components/Roles/ProductionHead/production_dashboard';
 
 import StartNewJob from '../../Components/Roles/Planner/startNew_job';
+import CreateNewJob from '../../Components/Roles/Planner/CreateNewJob';
 import PlannerNotifications from '../../Components/Roles/Planner/planner_notifications';
 import PlannerJobs from '../../Components/Roles/Planner/planner_jobs';
 import JobAssigned from '../../Components/Roles/Planner/job_assigned'; // IMPORTED: New component
@@ -43,7 +44,7 @@ interface DummyJob { // Re-defined a local dummy interface for these sections
   dispatchDate: string;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
+const Dashboard: React.FC<DashboardProps> = ({ tabValue, setTabValue, role }) => {
   // Re-added state for jobs, loading, error, etc., specifically for the
   // Printing Manager and Production Head sections that were using them.
   // This is to restore their original functionality as per your request.
@@ -113,6 +114,9 @@ const Dashboard: React.FC<DashboardProps> = ({ tabValue, role }) => {
         )}
         {role === 'planner' && tabValue === 'start new job' && (
           <StartNewJob />
+        )}
+        {role === 'planner' && tabValue === 'create new job' && (
+          <CreateNewJob onBack={() => setTabValue('dashboard')} />
         )}
         {role === 'planner' && tabValue === 'notifications' && (
           <PlannerNotifications />

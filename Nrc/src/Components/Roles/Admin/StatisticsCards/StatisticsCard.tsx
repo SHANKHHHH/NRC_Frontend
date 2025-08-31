@@ -32,13 +32,13 @@ const StatisticsCard: React.FC<StatisticsCardProps> = ({
   return (
     <div 
       className={`bg-white rounded-lg shadow-md p-6 border-l-4 ${borderColor} ${className} ${
-        isClickable ? 'group cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 hover:bg-gray-50 hover:border-2 hover:border-gray-200' : ''
+        isClickable ? 'group cursor-pointer hover:shadow-lg transition-all duration-200 hover:bg-gray-50 hover:border-2 hover:border-gray-200' : ''
       }`}
       onClick={isClickable ? onClick : undefined}
     >
       <div className="flex items-center justify-between">
         <div className="flex items-center">
-          <div className={`p-2 rounded-lg ${iconBgColor} ${isClickable ? 'group-hover:scale-110 transition-transform duration-200' : ''}`}>
+          <div className={`p-2 rounded-lg ${iconBgColor}`}>
             <Icon className={`${iconColor} ${isClickable ? 'group-hover:opacity-80' : ''}`} size={24} />
           </div>
           <div className="ml-4">

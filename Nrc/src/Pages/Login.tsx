@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import Logo from "../assets/Login/logo.jpg"; // Assuming this is the correct path to your logo
 import LoadingSpinner from "../Components/common/LoadingSpinner";
+import { Eye, EyeOff } from "lucide-react";
 
 /**
  * Type for form data used in login
@@ -36,6 +37,7 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<"success" | "error" | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // ---------------------- Handlers ---------------------- //
 
@@ -144,15 +146,24 @@ export default function Login({ setIsAuthenticated, setUserRole }: LoginProps) {
             />
 
             {/* Password Input */}
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Password"
-              className="w-full px-4 py-3 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                placeholder="Password"
+                className="w-full px-4 py-3 pr-12 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00AEEF]"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
 
             {/* Role Selection Dropdown (for UI only) */}
             {/* <select

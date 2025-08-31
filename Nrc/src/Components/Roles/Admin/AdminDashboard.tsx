@@ -233,15 +233,25 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
-  // Fetch data from API
-  const fetchDashboardData = async () => {
+  // Fetch data from API with date filtering
+  const fetchDashboardData = async (filterType?: DateFilterType, customRange?: { start: string; end: string }) => {
     try {
       setLoading(true);
       const accessToken = localStorage.getItem('accessToken');
       if (!accessToken) throw new Error('Authentication token not found.');
 
-      // Fetch job planning data
-      const jobPlanningResponse = await fetch('https://nrprod.nrcontainers.com/api/job-planning/', {
+      // Build query parameters for date filtering
+      const queryParams = new URLSearchParams();
+      if (filterType && filterType !== 'custom') {
+        queryParams.append('filter', filterType);
+      } else if (customRange) {
+        queryParams.append('startDate', customRange.start);
+        queryParams.append('endDate', customRange.end);
+      }
+
+      // Fetch filtered job planning data
+      const jobPlanningUrl = `https://nrprod.nrcontainers.com/api/job-planning/?${queryParams.toString()}`;
+      const jobPlanningResponse = await fetch(jobPlanningUrl, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
@@ -251,8 +261,9 @@ const AdminDashboard: React.FC = () => {
 
       const jobPlanningResult = await jobPlanningResponse.json();
       
-      // Fetch completed jobs data
-      const completedJobsResponse = await fetch('https://nrprod.nrcontainers.com/api/completed-jobs', {
+      // Fetch filtered completed jobs data
+      const completedJobsUrl = `https://nrprod.nrcontainers.com/api/completed-jobs?${queryParams.toString()}`;
+      const completedJobsResponse = await fetch(completedJobsUrl, {
         headers: { 'Authorization': `Bearer ${accessToken}` },
       });
 
@@ -458,54 +469,17 @@ const AdminDashboard: React.FC = () => {
     };
   };
 
+  // Handle filter changes
+  const handleFilterChange = (newFilter: DateFilterType, customRange?: { start: string; end: string }) => {
+    fetchDashboardData(newFilter, customRange);
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
-  // Filter data based on date range
-  const getFilteredData = () => {
-    if (!data) return null;
-
-    const now = new Date();
-    let startDate: Date;
-
-    switch (dateFilter) {
-      case 'today':
-        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        break;
-      case 'week':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      case 'month':
-        startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        break;
-      case 'quarter':
-        startDate = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1);
-        break;
-      case 'year':
-        startDate = new Date(now.getFullYear(), 0, 1);
-        break;
-      case 'custom':
-        startDate = new Date(customDateRange.start);
-        const endDate = new Date(customDateRange.end);
-        return {
-          ...data,
-          timeSeriesData: data.timeSeriesData.filter(item => {
-            const itemDate = new Date(item.date);
-            return itemDate >= startDate && itemDate <= endDate;
-          })
-        };
-      default:
-        return data;
-    }
-
-    return {
-      ...data,
-      timeSeriesData: data.timeSeriesData.filter(item => new Date(item.date) >= startDate)
-    };
-  };
-
-  const filteredData = getFilteredData();
+  // Data is now filtered at the API level, so we use the data directly
+  const filteredData = data;
 
   // handleViewJobDetails function removed as it's not needed
 
@@ -526,7 +500,7 @@ const AdminDashboard: React.FC = () => {
           <span className="block sm:inline"> {error}</span>
         </div>
         <button
-          onClick={fetchDashboardData}
+          onClick={() => fetchDashboardData()}
           className="mt-4 bg-[#00AEEF] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#0099cc] transition"
         >
           Retry
@@ -556,9 +530,15 @@ const AdminDashboard: React.FC = () => {
         {/* Date Filter Controls */}
         <DateFilterComponent
           dateFilter={dateFilter}
-          setDateFilter={setDateFilter}
+          setDateFilter={(filter) => {
+            setDateFilter(filter);
+            handleFilterChange(filter);
+          }}
           customDateRange={customDateRange}
-          setCustomDateRange={setCustomDateRange}
+          setCustomDateRange={(range) => {
+            setCustomDateRange(range);
+            handleFilterChange('custom', range);
+          }}
         />
       </div>
 
@@ -578,6 +558,14 @@ const AdminDashboard: React.FC = () => {
         onInProgressJobsClick={handleInProgressJobsClick}
         onPlannedJobsClick={handlePlannedJobsClick}
       />
+
+      {/* Completed Jobs Summary Table - Moved here below statistics grid */}
+      {filteredData.completedJobsData && filteredData.completedJobsData.length > 0 && (
+        <CompletedJobsTable
+          data={filteredData.completedJobsData}
+          className="mb-8"
+        />
+      )}
 
 
 
@@ -849,13 +837,7 @@ const AdminDashboard: React.FC = () => {
         />
       </div>
 
-      {/* Completed Jobs Analysis Table - Replaced chart with table */}
-      {filteredData.completedJobsData && filteredData.completedJobsData.length > 0 && (
-        <CompletedJobsTable
-          data={filteredData.completedJobsData}
-          className="mb-8"
-        />
-      )}
+
     </div>
   );
 };
