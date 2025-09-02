@@ -13,8 +13,8 @@ const AdminDashboard = lazy(() => import('../../Components/Roles/Admin/AdminDash
 import EditWorkingDetails from '../../Components/Roles/Admin/EditWorkingDetails';
 import PrintingMgrJobCard from '../../Components/Roles/PrintingMgr/job'; // Renamed import to avoid conflict
 import StopScreen from '../../Components/Roles/PrintingMgr/options/stop';
-import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive /dispatch_jobs';
-import ReadyDispatchForm from '../../Components/Roles/Dispatch_Executive /ReadytoDispatch/readyDispatch';
+import DispatchExecutiveJobs from '../../Components/Roles/Dispatch_Executive/dispatch_jobs';
+import ReadyDispatchForm from '../../Components/Roles/Dispatch_Executive/ReadytoDispatch/readyDispatch';
 import ProductionSteps from '../../Components/Roles/ProductionHead/productionSteps/production_steps';
 import ProductionHeadDashboard from '../../Components/Roles/ProductionHead/production_dashboard';
 
